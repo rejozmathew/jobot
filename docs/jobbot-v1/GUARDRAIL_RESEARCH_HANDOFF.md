@@ -1,6 +1,6 @@
 # Research handoff: restrictions that interrupt application submission
 
-Repository: https://github.com/rejozmathew/Jobot
+Repository: https://github.com/rejozmathew/jobot
 
 Branch: `codex/runtime-simplification`
 

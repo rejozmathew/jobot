@@ -124,7 +124,7 @@ execution sequence and data ownership.
 The repository is public. Start from `main`:
 
 ```text
-git clone https://github.com/rejozmathew/Jobot.git Jobot
+git clone https://github.com/rejozmathew/jobot.git Jobot
 cd Jobot
 ```
 

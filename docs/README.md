@@ -53,7 +53,8 @@ claim that every employer portal works.
 The project is now named **Jobot**. Historical checkout paths and baseline
 repository identifiers can still contain `auto-job-applier`; installed paths,
 `jobbot` commands and service names remain compatible. Current GitHub links use
-`rejozmathew/Jobot`.
+`rejozmathew/jobot` (lowercase). Existing clones can update their remote with
+`git remote set-url origin https://github.com/rejozmathew/jobot.git`.
 
 ## Documentation scope
 

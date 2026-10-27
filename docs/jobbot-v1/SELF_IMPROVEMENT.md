@@ -241,7 +241,7 @@ synthetic reproduction; a decoder error alone does not prove GPU memory exhausti
 
 ### Self-improvement #002 — 2026-09-28
 
-Tag: [`self-improvement-002-2026-09-28`](https://github.com/rejozmathew/Jobot/releases/tag/self-improvement-002-2026-09-28).
+Tag: [`self-improvement-002-2026-09-28`](https://github.com/rejozmathew/jobot/releases/tag/self-improvement-002-2026-09-28).
 The annotated tag identifies the deployed code commit and records the verified
 Ubuntu deployment timestamp and post-deployment checks. The matching private
 Ubuntu manifest retains file hashes and backups. GitHub branch: `self-improvement`.
@@ -271,7 +271,7 @@ it does not establish an increase in employer-portal submission success.
 
 ### Self-improvement #003 — 2026-09-28
 
-Tag: [`self-improvement-003-2026-09-28`](https://github.com/rejozmathew/Jobot/releases/tag/self-improvement-003-2026-09-28).
+Tag: [`self-improvement-003-2026-09-28`](https://github.com/rejozmathew/jobot/releases/tag/self-improvement-003-2026-09-28).
 The annotated tag identifies the validated code commit and verified Ubuntu
 deployment time. Matching private run records retain test reports, file hashes
 and rollback copies. GitHub branch: `self-improvement`.
@@ -319,7 +319,7 @@ production comparisons must retain intervention and deployed-version context.
 
 ### Self-improvement #004 — 2026-09-29
 
-Tag: [`self-improvement-004-2026-09-29`](https://github.com/rejozmathew/Jobot/releases/tag/self-improvement-004-2026-09-29).
+Tag: [`self-improvement-004-2026-09-29`](https://github.com/rejozmathew/jobot/releases/tag/self-improvement-004-2026-09-29).
 The annotated tag identifies the validated code commit, Ubuntu deployment time
 and final test counts. The matching private report and deployment manifest retain
 the daily audit, source fingerprints, hashes, backups and validation logs.
@@ -619,7 +619,7 @@ runtime deployment or interrupt an active application.
 
 ### Self-improvement #012 — 2026-10-07
 
-Tag: [self-improvement-012-2026-10-07](https://github.com/rejozmathew/Jobot/releases/tag/self-improvement-012-2026-10-07).
+Tag: [self-improvement-012-2026-10-07](https://github.com/rejozmathew/jobot/releases/tag/self-improvement-012-2026-10-07).
 The annotated tag identifies the exact validated code commit, Ubuntu deployment
 time and verification results. Matching private run notes retain the redacted
 review, source/file manifests, baseline/candidate logs and JUnit.

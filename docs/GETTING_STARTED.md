@@ -27,7 +27,7 @@ does not require a GitHub account. Hermes, your model provider, email and Simpli
 still require their own installation and authentication.
 
 ```text
-git clone https://github.com/rejozmathew/Jobot.git Jobot
+git clone https://github.com/rejozmathew/jobot.git Jobot
 cd Jobot
 ```
 
@@ -373,7 +373,7 @@ and your own search preferences; do not copy another person's leadership filters
 
 | Symptom | Check |
 |---|---|
-| Clone says repository not found | The public repository URL is `https://github.com/rejozmathew/Jobot.git`; check the URL and network access |
+| Clone says repository not found | The public repository URL is `https://github.com/rejozmathew/jobot.git`; check the URL and network access |
 | `runtime_config_not_selected` | Absolute `--config`, process `JOBBOT_CONFIG`, or installed private pointer |
 | `job-apply` missing / wrong procedure | Active Hermes profile, `external_dirs`, duplicate skill precedence and full checkout |
 | `jobbot` tool missing | Optional native plugin settings/reload; the skill plus CLI is still supported |

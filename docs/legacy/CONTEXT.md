@@ -10,7 +10,7 @@
 This project was extracted from a fork of [browser-use](https://github.com/browser-use/browser-use) to be a standalone application that uses `browser-use` as a dependency.
 
 **Original fork**: `github.com/rejozmathew/browser-use` (branch: `job-applier`)
-**Standalone repo**: `github.com/rejozmathew/Jobot`
+**Standalone repo**: `github.com/rejozmathew/jobot`
 
 ---
 
