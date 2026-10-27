@@ -518,6 +518,11 @@ trigger is Greenhouse-only and requires a current incomplete verification group;
 the flag reports the executor's observation that the requested email is absent.
 Other ATS email flows do not acquire a timed reload policy. The
 existing native/portable caller and workspace host still resolve the owned target.
+On a custom parent page, the helper uses its existing ownership-checked frame
+discovery to identify the Greenhouse application before routing this recovery.
+An unknown parent hostname alone does not reject an accepted embedded form.
+Current verification evidence still determines whether a reload is needed;
+an ordinary form resumes without reloading, and unrelated ATS routing is retained.
 `greenhouse_fast.advance` calls shared `application_runtime.browser_action` reload,
 then reconnects to the fresh document and runs its normal Simplify/residual/submit
 path within the remaining call slice. The existing runtime keeps the overall

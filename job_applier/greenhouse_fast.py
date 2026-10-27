@@ -498,24 +498,35 @@ def advance(config,client,ownership,params):
     started=time.monotonic();reloaded=None
     package=client.call('application_context',attempt_id=ownership['attempt_id'],worker_id=ownership['worker_id'])
     observed=client.call('browser_observe',**ownership,target_id=params['target_id'],cdp_url=config['cdp_url'])
-    if recovery:
-        from .application_runtime import browser_action
-        if observed.get('platform')!='greenhouse':
-            return dict(observed,status='continue',reason='missing_email_recovery_is_greenhouse_only')
-        screen=browser_action(config,client,ownership,package,params['target_id'],{'method':'snapshot'})
-        # The explicit flag is the executor's missing-mail finding. A stale
-        # request after a replacement must not reload an ordinary form again.
-        if any(g.get('complete') is False for g in screen.get('verification',{}).get('groups',[])):
-            reloaded=browser_action(config,client,ownership,package,params['target_id'],
-                {'method':'reload','recovery_reason':recovery})
-            if not reloaded.get('document_replaced'):
-                return dict(reloaded,handler='greenhouse_fast',status='inspection_required',
-                    reason='reload_requires_inspection',next_operation={'operation':'browser','parameters':{'method':'snapshot'}})
-            observed=client.call('browser_observe',**ownership,target_id=params['target_id'],cdp_url=config['cdp_url'])
+    if recovery and observed.get('platform') not in (None,'unknown','greenhouse'):
+        return dict(observed,status='continue',reason='missing_email_recovery_is_greenhouse_only')
     async def execute():
+        nonlocal observed,reloaded
         browser=await CDPBrowser.connect(config['cdp_url'],target_id=params['target_id'],expected_mode=config.get('browser_mode','headed'))
+        runner=None
         try:
             runner=GreenhouseRunner(await browser.get_current_page(),client.call,package,ownership,config,params['target_id'],observed)
+            if recovery:
+                from .application_runtime import browser_action
+                if observed.get('platform')!='greenhouse':
+                    # Custom career pages can host the accepted Greenhouse
+                    # document. Reuse owned-frame discovery before rejecting
+                    # recovery; the parent hostname alone cannot identify it.
+                    runner.deadline=started+seconds
+                    await runner.control()
+                    if not await runner.discover():
+                        return dict(observed,status='continue',reason='missing_email_recovery_is_greenhouse_only')
+                screen=await asyncio.to_thread(browser_action,config,client,ownership,package,params['target_id'],{'method':'snapshot'})
+                # A stale request must not reload an ordinary form again.
+                if any(g.get('complete') is False for g in screen.get('verification',{}).get('groups',[])):
+                    reloaded=await asyncio.to_thread(browser_action,config,client,ownership,package,params['target_id'],
+                        {'method':'reload','recovery_reason':recovery})
+                    if not reloaded.get('document_replaced'):
+                        return dict(reloaded,handler='greenhouse_fast',status='inspection_required',
+                            reason='reload_requires_inspection',next_operation={'operation':'browser','parameters':{'method':'snapshot'}})
+                    observed=await asyncio.to_thread(client.call,'browser_observe',**ownership,
+                        target_id=params['target_id'],cdp_url=config['cdp_url'])
+                    runner=GreenhouseRunner(await browser.get_current_page(),client.call,package,ownership,config,params['target_id'],observed)
             # Reload and refill share the caller's slice. The durable application
             # deadline remains owned by the runtime, including across this call.
             result=await runner.run(max(.05,seconds-(time.monotonic()-started)),None if reloaded else params.get('answers'))
@@ -524,5 +535,11 @@ def advance(config,client,ownership,params):
                     'reload_status':reloaded.get('recovery',{}).get('status'),
                     'elapsed_seconds':round(time.monotonic()-started,3)}
             return result
+        except TimeoutError:
+            if runner is None:raise
+            return runner.report('continue','call_slice_complete')
+        except (FrameUnavailable,ProtocolError) as exc:
+            if runner is None:raise
+            return runner.report('inspection_required',str(exc))
         finally:await browser.close()
     return asyncio.run(execute())

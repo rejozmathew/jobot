@@ -63,6 +63,31 @@ write detailed logs locally and return aggregate results for primary inspection.
 
 ## Implementation and deployment
 
+Self-improvement #022 (October 27, 2026) corrects explicit missing-email recovery
+on custom career pages containing an accepted Greenhouse frame. The existing
+helper already discovered those forms for ordinary advance, but its recovery
+branch rejected the unknown parent platform before using that capability. It now
+uses the same ownership-checked discovery, current verification evidence and
+shared reload, then resumes the normal Simplify/residual/submission path in the
+same session. An ordinary form is not reloaded because of a stale recovery flag;
+unresolved documents and other ATS retain their recovery handoffs. No helper,
+company branch, accepted confirmation source, deadline or retry policy is added.
+
+Private numbered run notes retain the paired synthetic replay, fixed-capacity
+queue, final managed suite, source manifest and actual publication/deployment
+status under `self-improvement-022-2026-10-27`. Ubuntu candidate validation passed 66 checks,
+preserving all 58 passing baseline checks across the corrected paired fixtures.
+Both four-slot queue replays submitted all five synthetic jobs with their original
+deadlines; manual recovery fallbacks decreased from one to zero. The final managed
+suite passed 1,468 tests with 180 opt-in/platform skips. These fixtures do not
+establish production submission-rate or latency non-regression. The observed posting already
+submitted through manual recovery, so this change has zero additional observed
+unique-job candidates. Avoiding that wrong helper handoff is a bounded workload
+opportunity; production latency and submission-rate effects remain unmeasured.
+The daily review also preserves a Simplify-only confirmation discrepancy and
+an unrelated early-form browser-write stall for further investigation. Neither
+justifies changing production records or shortening application recovery.
+
 Self-improvement #021 (October 24, 2026) corrects #020's Linux service entry
 point. The function-level tests passed, but the installed command imported an
 optional `filelock` package absent from the runtime. It now uses the existing
