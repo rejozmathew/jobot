@@ -5,11 +5,12 @@ from job_applier.managed_identity import application_match, is_same_application_
 JOB = 'https://jobs.dayforcehcm.com/en-US/synthetic/CANDIDATEPORTAL/jobs/123'
 FORM = JOB.replace('/en-US/', '/')
 
+@pytest.mark.parametrize('portal', ['CANDIDATEPORTAL', 'candidateportal', 'CandidatePortal'])
 @pytest.mark.parametrize('locale', ['en-US', 'fr-CA', 'de-DE'])
 @pytest.mark.parametrize('suffix', ['', '/apply/manualApplication', '/apply/manualApplication?applicationSource=Manual'])
-def test_locale_only_dayforce_transition_preserves_live_scope(locale, suffix):
-    before = JOB.replace('en-US', locale) + suffix
-    after = FORM + suffix
+def test_locale_only_dayforce_transition_preserves_live_scope(locale, suffix, portal):
+    before = JOB.replace('en-US', locale).replace('CANDIDATEPORTAL', portal) + suffix
+    after = FORM.replace('CANDIDATEPORTAL', portal) + suffix
     assert is_same_application_scope(before, after)
     assert is_same_application_scope(after, before)
     assert application_match(before, after) == {'status': 'same_job'}

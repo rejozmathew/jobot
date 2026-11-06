@@ -3,6 +3,7 @@ import asyncio
 import base64
 import json
 import threading
+import pytest
 
 from job_applier import application_deadline, cdp_client
 from job_applier.application_runtime import browser_action
@@ -13,7 +14,8 @@ from test_embedded_forms import fixture_browser
 from test_local_sessions import setup, connect, own
 
 
-def test_auth_recovery_preserves_four_slot_submissions_and_next_admission(tmp_path, monkeypatch):
+@pytest.mark.parametrize('flow', ['auth', 'dayforce_locale'])
+def test_auth_recovery_preserves_four_slot_submissions_and_next_admission(tmp_path, monkeypatch, flow):
     waiting, release = threading.Event(), threading.Event()
     original_wait = cdp_client.wait_for_apply_target
     auth_target = None
@@ -50,7 +52,8 @@ def test_auth_recovery_preserves_four_slot_submissions_and_next_admission(tmp_pa
             workspaces[0].update(cdp_url=endpoint, mode='headless', connection_mode='existing')
             service.configure_workspaces(workspaces)
             settings = {'mode': 'pilot', 'submission_mode': 'submit', 'autofill': 'native',
-                        'browser_mode': 'headless', 'application_concurrency': 4}
+                        'browser_mode': 'headless', 'application_concurrency': 4,
+                        'application_time_limit_minutes': 60}
             service.configure(settings, expected_version=service.settings_view()['version'])
             deadline = application_deadline.freeze({}, service.settings_view()['values'], service.now())['application_deadline']
             secret = tmp_path / 'synthetic-credentials.json'
@@ -61,7 +64,10 @@ def test_auth_recovery_preserves_four_slot_submissions_and_next_admission(tmp_pa
             cases, browsers, pending, subscriptions = [], [], set(), []
             jobs = []
             for index in range(5):
-                job = service.intake(url=f'https://applications.example.test/jobs/{100+index}')
+                url = ('https://jobs.dayforcehcm.com/en-US/synthetic/candidateportal/jobs/100'
+                       if flow == 'dayforce_locale' and index == 0 else
+                       f'https://applications.example.test/jobs/{100+index}')
+                job = service.intake(url=url)
                 service.eligibility(job['id'], 'ready', reason='Synthetic capacity replay')
                 jobs.append(job)
 
@@ -103,7 +109,20 @@ def test_auth_recovery_preserves_four_slot_submissions_and_next_admission(tmp_pa
                     await attach(index, reserve(index))
                 assert reserve(4)['state'] == 'capacity_wait'
                 auth_target = cases[0]['page'].target_id
-                auth_task = asyncio.create_task(action(cases[0], 'click'))
+                async def locale_recovery():
+                    page = cases[0]['page']
+                    await page.evaluate("history.replaceState({},'',"+json.dumps(
+                        'https://jobs.dayforcehcm.com/synthetic/candidateportal/jobs/100/apply')+");")
+                    gate = await asyncio.to_thread(cases[0]['client'].service.browser_observe, **cases[0]['owner'],
+                        target_id=page.target_id, cdp_url=endpoint)
+                    # Keep this occupied slot while other real submissions run.
+                    # The baseline still exercises every control before failure.
+                    waiting.set()
+                    assert await asyncio.to_thread(release.wait, 180)
+                    assert gate['identity']['status'] == 'same_job', gate
+                    return await action(cases[0], 'submit')
+                auth_task = asyncio.create_task(locale_recovery() if flow == 'dayforce_locale'
+                                                else action(cases[0], 'click'))
                 # A baseline without this recovery returns instead of reaching the
                 # wait; still exercise every successful control before reporting it.
                 for _ in range(500):
@@ -122,9 +141,16 @@ def test_auth_recovery_preserves_four_slot_submissions_and_next_admission(tmp_pa
                     assert metadata['application_deadline'] == deadline
                 assert not release.is_set()
                 print('capacity replay: four control submissions, next admission, and original deadlines preserved')
-                assert waiting.is_set() and not auth_task.done(), 'Authentication recovery did not retain its call'
+                if auth_task.done():
+                    await auth_task  # Surface fixture/navigation errors after exercising controls.
+                assert waiting.is_set() and not auth_task.done(), 'Recovery did not retain its call'
                 release.set()
                 result = await auth_task
+                if flow == 'dayforce_locale':
+                    assert result.get('status') == 'applied', result
+                    assert all(service.attempt(case['owner']['attempt_id'])['outcome'] == 'applied' for case in cases)
+                    print('dayforce capacity replay: five real synthetic confirmations; original deadlines preserved')
+                    return
                 assert result.get('target_handoff'), result
                 auth = cases[0]
                 host = object.__new__(WorkspaceHost)

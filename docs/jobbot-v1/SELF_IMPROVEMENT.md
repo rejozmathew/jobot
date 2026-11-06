@@ -63,6 +63,27 @@ write detailed logs locally and return aggregate results for primary inspection.
 
 ## Implementation and deployment
 
+Self-improvement #023 (November 6, 2026) corrects the existing Dayforce
+locale comparison for lowercase and mixed-case candidate-portal routes.
+A locale-only transition previously invalidated the same posting when its
+portal segment was not uppercase. The shared matcher now recognizes that
+presentation casing while retaining its tenant/posting/query comparison.
+No company branch, helper, historical identity rewrite, deadline, retry limit,
+confirmation change or application-execution gate is introduced.
+
+Private numbered run notes retain the baseline/candidate browser and capacity
+replays, final managed-suite evidence, publication and idle-deployment status
+under `self-improvement-023-2026-11-06`. The paired Ubuntu candidate passed all
+86 checks, preserving all 65 baseline passes and correcting 21 failing cases.
+Both four-slot replays preserved four unaffected submissions and next admission;
+the candidate also submitted the recovered locale-transition case with its original
+60-minute deadline. The final managed suite passed 1,486 tests with 183 platform
+or opt-in skips. Production submission-rate and speed effects remain under
+observation; isolated submissions do not establish them.
+Four affected attempts represented one observed posting with unknown downstream
+form/account requirements: the guaranteed additional-submission estimate is zero,
+with at most one conditional additional unique-job candidate in that cohort.
+
 Self-improvement #022 (October 27, 2026) corrects explicit missing-email recovery
 on custom career pages containing an accepted Greenhouse frame. The existing
 helper already discovered those forms for ordinary advance, but its recovery

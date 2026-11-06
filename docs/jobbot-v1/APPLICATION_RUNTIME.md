@@ -1,5 +1,18 @@
 # Application runtime: ownership, helper map, and rationale
 
+## November 6: Dayforce portal casing during locale recovery
+
+The existing shared `managed_identity.is_same_application_scope` comparison
+recognizes Dayforce's `candidateportal` route segment regardless of its display
+casing when a locale prefix is added or removed. The earlier normalization
+recognized only uppercase `CANDIDATEPORTAL`, so a lowercase route could be
+misclassified as a different posting after Simplify changed its locale prefix.
+The correction uses the same tenant, posting, host, scheme and query comparison;
+it does not rewrite intake URLs or historical identity keys. Existing browser,
+helper and recovery callers inherit the correction. No helper/caller is added,
+and submission evidence, Simplify order, approved answers, operator stops,
+application deadlines and retry schedules retain their existing behavior.
+
 ## October 22: harness-independent host dependencies and reset requests
 
 The existing `workspace_host.ensure_host` caller prefers the repository virtualenv

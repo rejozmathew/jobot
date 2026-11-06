@@ -386,9 +386,11 @@ def _dayforce_scope_url(url):
         p = urlsplit(canonical_url(url))
         if p.hostname != 'jobs.dayforcehcm.com':return url
         match = re.fullmatch(
-            r'/[A-Za-z]{2}-[A-Za-z]{2}(/[^/]+/CANDIDATEPORTAL/jobs/[0-9]+(?:/.*)?)', p.path)
+            r'/[A-Za-z]{2}-[A-Za-z]{2}(/[^/]+/(?i:CANDIDATEPORTAL)/jobs/[0-9]+(?:/.*)?)', p.path)
         if not match:return url
-        # The existing comparator still checks tenant, portal, posting, query,
+        # Dayforce emits both candidateportal and CANDIDATEPORTAL. Keep that
+        # presentation casing local to this recognized route. The existing
+        # comparator still checks tenant, portal, posting, query,
         # host and scheme. Intake keys and retained URLs are never rewritten.
         return urlunsplit(p._replace(path=match[1]))
     except (ValueError, ProtocolError):return url

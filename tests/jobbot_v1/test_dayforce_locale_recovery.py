@@ -8,16 +8,18 @@ from job_applier.application_runtime import browser_action
 from test_popup_document_handoff import popup_fixture
 
 
+@pytest.mark.parametrize('portal', ['CANDIDATEPORTAL', 'candidateportal'])
 @pytest.mark.parametrize('suffix', ['', '/apply/manualApplication'])
-def test_locale_transition_recovers_same_session_and_submits(tmp_path, suffix):
+def test_locale_transition_recovers_same_session_and_submits(tmp_path, suffix, portal):
     if not os.environ.get('JOBBOT_BROWSER_TEST_EXE'):
         pytest.skip('Explicit isolated browser executable required')
     async def run():
-        path='/en-US/synthetic/CANDIDATEPORTAL/jobs/123'+suffix
+        path='/en-US/synthetic/'+portal+'/jobs/123'+suffix
         async with popup_fixture(tmp_path, hosts=('jobs.dayforcehcm.com','forms.example.test'),
-                                 posting_path=path,tls=True) as (page,s,session,own,client,cfg,entry,final,receipts):
+                                 posting_path=path,tls=True,deadline_minutes=60) as (page,s,session,own,client,cfg,entry,final,receipts):
             before=s.attempt(own['attempt_id'])
             deadline=json.loads(s.session(session['id'])['metadata_json']).get('application_deadline')
+            assert deadline['limit_seconds'] == 3600
             current=entry.rsplit('/apply/',1)[0]+path.replace('/en-US/','/')+'/apply'
             await page.evaluate("history.replaceState({},'',"+json.dumps(current)+");document.body.innerHTML="+json.dumps(
                 '<h1>Application review</h1><label>Full name<input id="name" required></label>'
