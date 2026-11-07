@@ -8,9 +8,14 @@ from job_applier.application_runtime import browser_action
 from test_popup_document_handoff import popup_fixture
 
 
-@pytest.mark.parametrize('portal', ['CANDIDATEPORTAL', 'candidateportal'])
-@pytest.mark.parametrize('suffix', ['', '/apply/manualApplication'])
-def test_locale_transition_recovers_same_session_and_submits(tmp_path, suffix, portal):
+@pytest.mark.parametrize('portal,suffix,attribution', [
+    ('CANDIDATEPORTAL', '', False),
+    ('CANDIDATEPORTAL', '/apply/manualApplication', False),
+    ('candidateportal', '', False),
+    ('candidateportal', '/apply/manualApplication', False),
+    ('candidateportal', '/apply/manualApplication?applicationSource=Manual', True),
+])
+def test_locale_transition_recovers_same_session_and_submits(tmp_path, suffix, portal, attribution):
     if not os.environ.get('JOBBOT_BROWSER_TEST_EXE'):
         pytest.skip('Explicit isolated browser executable required')
     async def run():
@@ -20,7 +25,15 @@ def test_locale_transition_recovers_same_session_and_submits(tmp_path, suffix, p
             before=s.attempt(own['attempt_id'])
             deadline=json.loads(s.session(session['id'])['metadata_json']).get('application_deadline')
             assert deadline['limit_seconds'] == 3600
-            current=entry.rsplit('/apply/',1)[0]+path.replace('/en-US/','/')+'/apply'
+            current = entry.rsplit('/apply/', 1)[0] + path.replace('/en-US/', '/')
+            if attribution:
+                original_gate = await asyncio.to_thread(s.browser_observe, **own,
+                    target_id=page.target_id, cdp_url=page.fixture_endpoint)
+                assert original_gate['identity']['status'] == 'same_job'
+                await page.evaluate("history.pushState({},'',location.href+'&ref=Simplify&src=Simplify&utm_source=Simplify')")
+                current += '&ref=Simplify&source=Simplify&utm_source=Simplify'
+            else:
+                current += '/apply'
             await page.evaluate("history.replaceState({},'',"+json.dumps(current)+");document.body.innerHTML="+json.dumps(
                 '<h1>Application review</h1><label>Full name<input id="name" required></label>'
                 '<button onclick="if(!event.isTrusted)return;'+

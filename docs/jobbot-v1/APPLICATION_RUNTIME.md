@@ -1,5 +1,17 @@
 # Application runtime: ownership, helper map, and rationale
 
+## November 7: Dayforce manual application attribution
+
+Dayforce can add Simplify attribution while changing the locale on an owned
+manual application route. The shared scope comparator treats the observed
+`ref=Simplify` with `src=Simplify` or `source=Simplify` as attribution only on
+the hosted HTTPS `/apply/manualApplication` route with `applicationSource=Manual`.
+Tenant, numeric posting, host and scheme still have to agree. Extra query keys,
+duplicates and other values still use the existing identity comparison, and
+sensitive routes retain their existing guards. The comparison leaves intake and
+history keys intact. Existing browser and recovery callers can continue in the
+same session with the original operator deadline and confirmation requirements.
+
 ## November 6: Dayforce portal casing during locale recovery
 
 The existing shared `managed_identity.is_same_application_scope` comparison
@@ -1242,7 +1254,7 @@ history are not migrated or rewritten. Missing direct URLs remain unclassified.
 | static/jobbot.js / managed_api.py / managed.py.update_job_url | Operator URL corrections retain the job number, added date, outcomes, source references and old identity aliases; save normalized replacement aliases and an audit trail on the same job. Sorting and filters use existing job data in the dashboard. |
 | static/jobbot.js / managed_queue.py | Queue selected sends visible selection in table order as one immediate request; queued items are reused and receipt insertion order breaks equal-time ties. Repeated requests retain their original position; a new manual selection can reorder its waiting jobs. Current applications continue, automatic scheduling remains enabled or paused as configured. |
 | managed.py / managed_runtime.py / managed_events.py / managed_views.py / managed_continuity.py | Existing policy/actions/events/duplicates consult local lifecycle or explicit legacy ownership |
-| managed_identity.py | Workday host/site/full-requisition and iCIMS host/job-id comparison, history equivalence, application scope and diagnostic match states; Rippling locale presentation is ignored only on its hosted tenant/full-UUID route, and Dayforce locale presentation only on its hosted tenant/CANDIDATEPORTAL/numeric-posting route. Existing frame router, runtime, credentials and binding callers share scope matching; intake URLs and history keys remain unchanged. |
+| managed_identity.py | Workday host/site/full-requisition and iCIMS host/job-id comparison, history equivalence, application scope and diagnostic match states; Rippling locale presentation is ignored only on its hosted tenant/full-UUID route, and Dayforce locale presentation only on its hosted tenant/CANDIDATEPORTAL/numeric-posting route. The exact Simplify attribution bundles are equivalent on its HTTPS manual application route. Existing frame router, runtime, credentials and binding callers share scope matching; intake URLs and history keys remain unchanged. |
 | route_history.py / managed_sessions.handoff_target | Called by managed_runtime.browser_observe before scope reads; retains local owned main-document history evidence and atomically projects delayed same-origin continuations. A fenced retained history source remains valid after an accepted Apply handoff changes the target key; source, browser/session/target/fence, current identity and same-origin/conflict checks still apply. The iCIMS reader refreshes context through this shared observer before inspecting a changed embedded form. No browser writes, account migration, retry decision or application outcome. |
 | managed_shared.submission_state / submission_pending and managed_events._submission_state / _submission_pending | One per-attempt evidence projection from existing ordered events; evidence reporting only; accepted alone suppresses a new requested attempt |
 | greenhouse_fast.py | Session-owned `greenhouse_advance` residual batches; next_operation/startup guidance, local workspace host and nonlocal plugin dispatch call the same advance entry. Simplify remains the bulk filler. Legacy platform_handlers/greenhouse.py stays available to its existing agent/registry callers. |

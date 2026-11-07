@@ -63,6 +63,21 @@ write detailed logs locally and return aggregate results for primary inspection.
 
 ## Implementation and deployment
 
+Self-improvement #024 (November 7, 2026) addresses a compound Dayforce
+transition observed after #023. Retained browser history showed the same
+posting lose its locale and gain Simplify attribution. The shared scope check
+now recognizes those exact attribution bundles on the hosted manual form.
+The existing tenant, posting, host, query and credential guards still apply.
+The two affected attempts represented one posting with untested later stages.
+The zero-gain scenario is zero additional submissions. The conditional scenario
+is one additional unique posting if all later controls and requirements are
+resolvable. The paired Ubuntu suite passed all 90 candidate checks, preserving
+all 86 baseline passes. The four-slot replay preserved the four control
+submissions and next admission, and recovered the affected fifth submission
+with its original deadline. The final managed suite passed 1,488 tests with
+185 platform or opt-in skips. Private notes keep replay, release and production
+evidence separate. Real submission and latency effects remain under observation.
+
 Self-improvement #023 (November 6, 2026) corrects the existing Dayforce
 locale comparison for lowercase and mixed-case candidate-portal routes.
 A locale-only transition previously invalidated the same posting when its
