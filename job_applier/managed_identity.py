@@ -74,7 +74,7 @@ def ats_posting_identity(url, *, namespace=None, source_id=None):
 
 
 def ats_posting_key(url, *, namespace=None, source_id=None):
-    identity=ats_posting_identity(url,namespace=namespace,source_id=source_id)
+    identity=ats_posting_identity(url,namespace=namespace,source_id=source_id) or workday_identity(url, location_optional=True)
     return hashlib.sha256(dumps(['ats_posting',identity]).encode()).hexdigest() if identity else None
 
 
@@ -245,7 +245,7 @@ def _workday_url(url):
     except (ValueError, ProtocolError):return None
 
 
-def workday_identity(url):
+def workday_identity(url, *, location_optional=False):
     parsed = _workday_url(url)
     if not parsed:return None
     p, parts = parsed
@@ -260,12 +260,17 @@ def workday_identity(url):
         parsed_destination = _workday_url(route)
         if not parsed_destination or parsed_destination[1][1:2] not in (['job'], ['details']):return None
         return workday_identity(route)
-    index = 3 if parts[1:2] == ['job'] else 2 if parts[1:2] == ['details'] else None
+    # A public posting can omit the location slug. Only intake identity opts
+    # into that exact, query-free spelling with an explicit requisition suffix.
+    locationless = (location_optional and len(parts) == 3 and parts[1] == 'job'
+                    and not p.query and '//' not in p.path)
+    index = 2 if locationless or parts[1:2] == ['details'] else 3 if parts[1:2] == ['job'] else None
     if index is None or len(parts) <= index or '_' not in parts[index]:return None
     slug = parts[index]
     # Preserve requisition suffixes such as R100_1; do not mistake its final 1
     # for the entire requisition. Other Workday IDs use the final slug separator.
     markers=list(re.finditer(r'_(?:jr|req|r)[-_]?\d',slug))
+    if locationless and not markers:return None
     requisition = slug[markers[-1].start()+1:] if markers else slug.rsplit('_', 1)[-1]
     if not re.fullmatch(r'[a-z0-9][a-z0-9_.-]*', requisition):return None
     for key, value in parse_qsl(p.query, keep_blank_values=True):

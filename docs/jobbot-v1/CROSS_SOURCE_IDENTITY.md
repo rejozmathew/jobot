@@ -74,7 +74,12 @@ reference. This supports arbitrary employer URL paths and HTTP/HTTPS aliases
 without inferring a board from a company name or matching a bare number across
 unrelated employers. Unknown query parameters remain part of the identity.
 The same intake entry point uses the existing Workday, LinkedIn and iCIMS
-identity readers. No new network call or availability dependency is introduced.
+identity readers. A hosted Workday public posting can omit the location segment.
+Its intake key still uses the same host, career site and full requisition when
+the remaining role slug has an explicit Workday requisition suffix and the
+canonical URL has no query parameters. The location-free spelling applies to
+posting keys. Live ownership and observed redirect checks use the existing
+route reader. No new network call or availability dependency is introduced.
 
 The posting key takes precedence over rediscovered requisition labels. Incoming
 conflicting labels do not create a new job, overwrite retained titles or attach

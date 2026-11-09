@@ -250,3 +250,61 @@ await [...details.querySelectorAll('button')].find(b=>b.textContent==='These are
 assert(calls[0][0]==='/v1/set_duplicate_match_state','Wrong dismissal operation');
 assert(calls[0][1].match_id==='match'&&calls[0][1].state==='dismissed','Wrong match dismissed');
 ''')
+
+@pytest.mark.parametrize('short_path', [
+    '/en-US/External_Careers/job/Director-of-Research_R-90-1234_1',
+    '/external_careers/job/Director-of-Research_R-90-1234_1',
+])
+def test_workday_locationless_intake_reuses_exact_submission_before_dispatch(tmp_path, short_path):
+    service,asset,_,_,_=setup(tmp_path)
+    host='https://example.wd5.myworkdayjobs.com'
+    original=service.intake(url=host+'/External_Careers/job/City/Director_R-90-1234_1')
+    success(service,original)
+    alias=service.intake(url=host+short_path)
+    enqueue=lambda job,key:service.queue_enqueue(job_ids=[job['id']],identity_id='candidate',
+        resume_asset_id=asset['id'],request_id=key)
+    try:
+        enqueue(alias,'rediscovered')
+    except ProtocolError as exc:
+        assert exc.code=='already_applied'
+    distinct=service.intake(url=host+'/External_Careers/job/City/Director_R-90-1234_2')
+    enqueue(distinct,'different-requisition')
+    first=service.queue_take(concurrency_limit=1)
+    duplicate_dispatches=int(first['job_id']==alias['id'])
+    if duplicate_dispatches:
+        assert service.queue_take(concurrency_limit=1) is None
+        service.queue_complete(first['id'],outcome='already_applied')
+        first=service.queue_take(concurrency_limit=1)
+    assert first['job_id']==distinct['id']
+    assert service.queue_take(concurrency_limit=1) is None
+    success(service,distinct)
+    service.queue_complete(first['id'],outcome='applied')
+    with service.read() as db:
+        assert db.execute('SELECT count(*) FROM submission_ledger').fetchone()[0]==2
+    print(f'fixed-capacity replay: 2 confirmed controls and {duplicate_dispatches} redundant dispatches')
+    assert duplicate_dispatches==0
+    assert alias['id']==original['id']
+
+
+def test_workday_locationless_alias_does_not_change_retry_or_browser_scope(tmp_path):
+    from job_applier.managed_identity import ats_posting_key, explicit_job_conflict, is_same_application_scope, job_key
+    service,asset,_,_,_=setup(tmp_path)
+    host='https://example.wd5.myworkdayjobs.com'
+    original=host+'/External_Careers/job/City/Director_JR1234_1'
+    short=host+'/external_careers/job/Director_JR1234_1'
+    first=service.intake(url=original)
+    with service.tx() as db:
+        db.execute("UPDATE jobs SET status='submission_unknown' WHERE id=?",(first['id'],))
+    alias=service.intake(url=short)
+    queued=service.queue_enqueue(job_ids=[alias['id']],identity_id='candidate',
+        resume_asset_id=asset['id'],request_id='retry-uncertain',retry=True)
+    assert queued['items'][0]['state']=='queued'
+    assert alias['id']==first['id']
+    assert job_key(short)!=job_key(original)
+    assert not is_same_application_scope(short, original)
+    assert not explicit_job_conflict(short, original.replace('/External_Careers/','/Internal_Careers/'))
+    for other in (short.replace('JR1234_1','JR1234_2'), short.replace('/external_careers/','/internal_careers/'),
+                  short.replace('example.wd5','other.wd5'), short+'?reqid=JR9000',
+                  short+'?token=opaque', short.replace('Director_JR1234_1','Director_1234'),
+                  short.replace('https:', 'http:'), short.replace('Director_','Director%2F_')):
+        assert ats_posting_key(other)!=ats_posting_key(original)

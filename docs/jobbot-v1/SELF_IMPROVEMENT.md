@@ -63,6 +63,20 @@ write detailed logs locally and return aggregate results for primary inspection.
 
 ## Implementation and deployment
 
+Self-improvement #025 (November 9, 2026) recognizes a location-free
+Workday posting URL at intake when the hosted career site and explicit full
+requisition identify the same posting. This lets the existing duplicate
+policy find a prior confirmed submission before opening an application.
+The two observed redundant dispatches belonged to one already-submitted
+posting, so the additional unique-submission estimate is zero. Original
+records, browser ownership, accepted confirmation and retry behavior remain
+under the existing rules. The paired Ubuntu replay preserved all 181 baseline
+passes and recovered the three synthetic failures. Both one-slot queue variants
+kept the two confirmed controls and removed one redundant dispatch. Another 75
+confirmation, authentication and Simplify-order checks passed on both sources.
+The final managed suite passed 1,491 tests with 185 skips. Private notes retain
+the deployment evidence and production effects remain under observation.
+
 Self-improvement #024 (November 7, 2026) addresses a compound Dayforce
 transition observed after #023. Retained browser history showed the same
 posting lose its locale and gain Simplify attribution. The shared scope check
