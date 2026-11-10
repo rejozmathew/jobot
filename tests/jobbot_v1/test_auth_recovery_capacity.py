@@ -14,7 +14,7 @@ from test_embedded_forms import fixture_browser
 from test_local_sessions import setup, connect, own
 
 
-@pytest.mark.parametrize('flow', ['auth', 'dayforce_locale', 'dayforce_attribution'])
+@pytest.mark.parametrize('flow', ['auth', 'dayforce_locale', 'dayforce_attribution', 'workday_locationless'])
 def test_auth_recovery_preserves_four_slot_submissions_and_next_admission(tmp_path, monkeypatch, flow):
     waiting, release = threading.Event(), threading.Event()
     original_wait = cdp_client.wait_for_apply_target
@@ -63,12 +63,17 @@ def test_auth_recovery_preserves_four_slot_submissions_and_next_admission(tmp_pa
                           spool_dir=str(tmp_path / 'spool'))
             cases, browsers, pending, subscriptions = [], [], set(), []
             jobs = []
+            workday_host = 'https://example.wd5.myworkdayjobs.com'
+            workday_short = workday_host + '/en-US/Careers/job/Director_JR900_1'
+            workday_form = workday_host + '/en-US/Careers/job/Remote/Director_JR900_1/apply/applyManually'
             for index in range(5):
                 url = f'https://applications.example.test/jobs/{100+index}'
                 if flow.startswith('dayforce_') and index == 0:
                     url = 'https://jobs.dayforcehcm.com/en-US/synthetic/candidateportal/jobs/100'
                     if flow == 'dayforce_attribution':
                         url += '/apply/manualApplication?applicationSource=Manual'
+                if flow == 'workday_locationless' and index == 0:
+                    url = workday_short
                 job = service.intake(url=url)
                 service.eligibility(job['id'], 'ready', reason='Synthetic capacity replay')
                 jobs.append(job)
@@ -125,8 +130,28 @@ def test_auth_recovery_preserves_four_slot_submissions_and_next_admission(tmp_pa
                     assert await asyncio.to_thread(release.wait, 180)
                     assert gate['identity']['status'] == 'same_job', gate
                     return await action(cases[0], 'submit')
-                auth_task = asyncio.create_task(locale_recovery() if flow.startswith('dayforce_')
-                                                else action(cases[0], 'click'))
+                async def workday_recovery():
+                    case = cases[0]
+                    page = case['page']
+                    package = service.application_context(case['owner']['attempt_id'])
+                    waiting.set()
+                    assert await asyncio.to_thread(release.wait, 180)
+                    result = await asyncio.to_thread(browser_action, config, case['client'], case['owner'],
+                        package, page.target_id, {'method':'navigate', 'url':workday_form})
+                    assert result['navigation_requested']
+                    gate = await asyncio.to_thread(case['client'].service.browser_observe, **case['owner'],
+                        target_id=page.target_id, cdp_url=endpoint)
+                    assert gate['identity']['status'] == 'same_job' and gate['native_takeover_authorized'], gate
+                    assert service.session(case['session']['id'])['attempt_id'] == case['owner']['attempt_id']
+                    assert json.loads(service.session(case['session']['id'])['metadata_json'])['application_deadline'] == deadline
+                    return await action(case, 'submit')
+
+                if flow == 'workday_locationless':
+                    auth_task = asyncio.create_task(workday_recovery())
+                elif flow.startswith('dayforce_'):
+                    auth_task = asyncio.create_task(locale_recovery())
+                else:
+                    auth_task = asyncio.create_task(action(cases[0], 'click'))
                 # A baseline without this recovery returns instead of reaching the
                 # wait; still exercise every successful control before reporting it.
                 for _ in range(500):
@@ -150,10 +175,10 @@ def test_auth_recovery_preserves_four_slot_submissions_and_next_admission(tmp_pa
                 assert waiting.is_set() and not auth_task.done(), 'Recovery did not retain its call'
                 release.set()
                 result = await auth_task
-                if flow.startswith('dayforce_'):
+                if flow != 'auth':
                     assert result.get('status') == 'applied', result
                     assert all(service.attempt(case['owner']['attempt_id'])['outcome'] == 'applied' for case in cases)
-                    print('dayforce capacity replay: five real synthetic confirmations; original deadlines preserved')
+                    print('route recovery capacity replay: five real synthetic confirmations; original deadlines preserved')
                     return
                 assert result.get('target_handoff'), result
                 auth = cases[0]

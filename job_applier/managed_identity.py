@@ -408,6 +408,18 @@ def _dayforce_scope_url(url):
     except (ValueError, ProtocolError):return url
 
 
+def _workday_locationless_recovery(job_url, candidate_url):
+    """Recognize the canonical posting and manual form of a short Workday URL."""
+    expected = workday_identity(job_url, location_optional=True)
+    destination = _workday_url(candidate_url)
+    if not expected or not destination:return False
+    parsed, parts = destination
+    if (parsed.query or '//' in parsed.path or parts[1:2] != ['job'] or len(parts) < 4
+            or parts[4:] not in ([], ['apply'], ['apply', 'applymanually'])):
+        return False
+    return workday_identity(candidate_url) == expected
+
+
 def is_same_application_scope(job_url: str, candidate_url: str) -> bool:
     try:
         job_url, candidate_url = _rippling_scope_url(job_url), _rippling_scope_url(candidate_url)
@@ -417,8 +429,11 @@ def is_same_application_scope(job_url: str, candidate_url: str) -> bool:
         li_expected,li_actual=linkedin_identity(job_url),linkedin_identity(candidate_url)
         if li_expected or li_actual:return bool(li_expected and li_actual and li_expected==li_actual)
         workday_host=urlsplit(str(job_url).strip()).hostname or ''
-        if workday_host.casefold().endswith('.myworkdayjobs.com') and workday_identity(job_url):
-            return is_workday_application_scope(job_url, candidate_url)
+        if workday_host.casefold().endswith('.myworkdayjobs.com'):
+            if workday_identity(job_url):
+                return is_workday_application_scope(job_url, candidate_url)
+            if _workday_locationless_recovery(job_url, candidate_url):
+                return True
         icims_expected,icims_actual=icims_identity(job_url),icims_identity(candidate_url)
         if icims_expected and icims_actual and icims_expected==icims_actual:return True
         job_p = urlsplit(canonical_url(job_url))

@@ -286,7 +286,7 @@ def test_workday_locationless_intake_reuses_exact_submission_before_dispatch(tmp
     assert alias['id']==original['id']
 
 
-def test_workday_locationless_alias_does_not_change_retry_or_browser_scope(tmp_path):
+def test_workday_locationless_alias_preserves_retry_and_exact_scope_guards(tmp_path):
     from job_applier.managed_identity import ats_posting_key, explicit_job_conflict, is_same_application_scope, job_key
     service,asset,_,_,_=setup(tmp_path)
     host='https://example.wd5.myworkdayjobs.com'
@@ -301,7 +301,12 @@ def test_workday_locationless_alias_does_not_change_retry_or_browser_scope(tmp_p
     assert queued['items'][0]['state']=='queued'
     assert alias['id']==first['id']
     assert job_key(short)!=job_key(original)
-    assert not is_same_application_scope(short, original)
+    assert is_same_application_scope(short, original)
+    assert is_same_application_scope(short, original + '/apply/applyManually')
+    for other in (original.replace('JR1234_1','JR1234_2'), original.replace('example.wd5','other.wd5'),
+                  original.replace('/External_Careers/','/Internal_Careers/'), original + '?token=opaque',
+                  original + '?reqid=JR9000', original + '/apply/unrecognized', host + '/External_Careers/login'):
+        assert not is_same_application_scope(short, other)
     assert not explicit_job_conflict(short, original.replace('/External_Careers/','/Internal_Careers/'))
     for other in (short.replace('JR1234_1','JR1234_2'), short.replace('/external_careers/','/internal_careers/'),
                   short.replace('example.wd5','other.wd5'), short+'?reqid=JR9000',

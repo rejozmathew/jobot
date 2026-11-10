@@ -63,6 +63,21 @@ write detailed logs locally and return aggregate results for primary inspection.
 
 ## Implementation and deployment
 
+Self-improvement #026 (November 10, 2026) restores owned Workday recovery
+from a location-free entry to its exact canonical posting or manual form.
+Intake identity from #025 already recognized the posting. The live scope
+check still rejected both canonical recovery routes. The existing Workday
+parser now supplies the same host, site and full requisition comparison for
+that specific transition. The observed posting had a separate account
+blocker, so the repair has zero supported additional submissions in this
+cohort. The paired Ubuntu replay preserved 183 baseline passes and recovered
+both failures. The four-slot replay preserved all four unaffected submissions
+and the next admission, then recovered a fifth submission with its original
+deadline. Another 75 matched confirmation, authentication and Simplify-order
+checks passed on both sources. The final managed suite passed 1,491 with 186
+skips. Private records retain the release evidence. Production effects remain
+under observation.
+
 Self-improvement #025 (November 9, 2026) recognizes a location-free
 Workday posting URL at intake when the hosted career site and explicit full
 requisition identify the same posting. This lets the existing duplicate

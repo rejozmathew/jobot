@@ -985,6 +985,13 @@ full URL before and after reading; public URLs omit authentication queries.
 preserving owned snapshots/screenshots and navigation back to the assigned job.
 Navigation during observation prevents quiescence.
 
+A location-free Workday entry can recover to the canonical posting or manual
+application on the same hosted career site when both routes carry the same
+complete requisition. The short entry and canonical recovery route must have
+empty canonical queries. This supplements existing same-attempt navigation
+and observation. Intake keys, account evidence, ownership checks, Simplify
+settlement and the frozen deadline retain their existing behavior.
+
 ## Actual startup and call sequence
 
 Configuration selection is `--config`, then `JOBBOT_CONFIG`, then the ignored
