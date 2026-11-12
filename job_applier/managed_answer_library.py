@@ -48,6 +48,9 @@ def question_identity(question):
     if text in ('when can you start', 'when could you start', 'when are you available to start',
                 'when would you be available to start'):
         return 'intent:start_availability'
+    from .profile_questions import field_for_question
+    path = field_for_question(question)
+    if path:return 'profile:' + path
     return 'exact:' + text
 
 
@@ -123,6 +126,30 @@ def resolve_library(question, job, entries):
             'basis':'answer_library:' + entry['id'] + ':' + str(entry['revision'])}
 
 
+def resolve_with_profile(question, job, entries, profile):
+    """Scoped exceptions, structured profile facts, then general learned answers.
+
+    Explicit human responses are handled by callers before this function.
+    A missing answer still returns to the executor's ordinary recovery path.
+    """
+    from .profile_questions import field_for_question, structured_answer
+    scoped = [e for e in entries if e['scope'] in ('company', 'job') and e['state'] == 'active']
+    resolved = resolve_library(question, job, scoped)
+    if resolved.get('matched'):return resolved
+    path = field_for_question(question['question'])
+    value = structured_answer(question['question'], profile)
+    if value is not None or path and path in (profile.get('profile_answer_sources') or {}):
+        return {'matched':True, 'answer':option_answer(question, value) if value is not None else None,
+                'source':'approved_profile', 'basis':'profile:' + (path or 'standard_answers')}
+    resolved = resolve_library(question, job, entries)
+    if resolved.get('matched') and not resolved.get('retired'):return resolved
+    from .application_answers import approved_answer
+    value = approved_answer(question['question'], profile)
+    if value is not None:
+        return {'matched':True, 'answer':option_answer(question, value), 'source':'approved_profile', 'basis':'approved_profile'}
+    return resolved
+
+
 class AnswerLibraryServices(AnswerLearningServices):
     @staticmethod
     def _has_library_schema(db):
@@ -163,19 +190,14 @@ class AnswerLibraryServices(AnswerLearningServices):
             AND NOT EXISTS (SELECT 1 FROM job_archives a WHERE a.job_id=j.id)'''
             + (' AND q.identity_id=?' if identity_id else ''), (identity_id,) if identity_id else ()).fetchall()
         entries = {};profiles = {};jobs = {};result = {'resolved':0, 'updated':0, 'invalidated':0}
-        from .application_answers import approved_answer
         for row in rows:
             question = self._question(row);identity = question['identity_id'];job_id = question['job_id']
             if identity not in entries:
                 entries[identity] = self._library_entries(db, identity)
                 profiles[identity] = json.loads(self._get(db, 'candidates', identity)['profile_json'])
             if job_id not in jobs:jobs[job_id] = dict(self._get(db, 'jobs', job_id))
-            resolved = resolve_library(question, jobs[job_id], entries[identity]);answer = resolved['answer']
-            source = 'answer_library';entry_id = resolved.get('entry_id');version = resolved.get('revision')
-            if answer is None and (not resolved.get('matched') or resolved.get('retired')):
-                approved = approved_answer(question['question'], profiles[identity])
-                answer = option_answer(question, approved) if approved is not None else None
-                source = 'approved_profile';entry_id = None;version = None
+            resolved = resolve_with_profile(question, jobs[job_id], entries[identity], profiles[identity]);answer = resolved['answer']
+            source = resolved.get('source', 'answer_library');entry_id = resolved.get('entry_id');version = resolved.get('revision')
             if answer is None and question['answer'] is None:continue
             changed = self._record_question_answer(db, question, answer,
                 source if answer is not None else 'knowledge_changed', entry_id=entry_id, library_revision=version,

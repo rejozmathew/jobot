@@ -367,17 +367,21 @@
             <label>Full Name
               <input id="profile-full-name" type="text">
             </label>
-            <label>Work Authorization
-              <input id="profile-work-auth" type="text">
-            </label>
+            <input id="profile-work-auth" type="hidden">
           </div>
           <p><strong>Selected Resume: </strong><span id="profile-resume">None</span></p>
+          <p class="profile-intro">Your general application answers. Leave an answer unset when it is unknown. Employer and job-specific responses stay in Learned answers.</p>
+          <div id="profile-file-sync" class="profile-file-sync" role="status"></div>
+          <div id="profile-suggestions"></div>
+          <div id="profile-question-sections"></div>
           <details style="margin: 12px 0;">
             <summary>Advanced Factual JSON (no secrets or account credentials)</summary>
             <textarea id="profile-json" rows="8" class="mono" style="margin-top: 8px;"></textarea>
+            <p id="profile-json-error" role="status"></p>
           </details>
           <div class="toolbar">
             <button class="primary" type="submit">Save profile</button>
+            <button id="profile-reload" type="button" title="Replace this draft with the currently saved profile">Reload saved profile</button>
           </div>
         </form>
       </section>

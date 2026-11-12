@@ -37,7 +37,12 @@
     "sponsorship_type_needed": "",
     "legally_authorized_us": null,
     "legally_authorized_eu": null,
-    "work_permit_other_countries": []
+    "work_permit_other_countries": [],
+    "i140_approved": null,
+    "employment_based_category": "",
+    "j1_home_residency_requirement": null,
+    "h1b_time_in_us": "",
+    "h1b_maxout_date": ""
   },
   "work_preferences": {
     "remote_only": null,
@@ -54,7 +59,11 @@
       "includes_bonus": null
     },
     "notice_period_days": null,
-    "earliest_start_date": ""
+    "earliest_start_date": "",
+    "relocation_timing": "",
+    "preferred_work_hours": "",
+    "open_to_individual_contributor": null,
+    "min_base_comp": null
   },
   "dealbreakers": [],
   "eeo_information": {
@@ -92,7 +101,27 @@
     "security_clearance": "",
     "highest_education": "",
     "years_in_current_role": null,
-    "reason_for_leaving": ""
+    "reason_for_leaving": "",
+    "criminal_conviction_history": null,
+    "arrest_history": null,
+    "currently_employed": null,
+    "involuntarily_discharged": null,
+    "outside_employment": null,
+    "continue_outside_activities": null,
+    "has_employment_restrictions": null,
+    "may_contact_current_employer": null,
+    "professional_references": "",
+    "remote_workspace_ready": null,
+    "sms_consent": null,
+    "identity_verification_consent": null,
+    "interview_recording_consent": null,
+    "government_employment_history": null,
+    "government_official_or_immediate_family": null,
+    "public_official_relationships": null,
+    "government_program_debarment": null,
+    "professional_license_disciplinary_history": null,
+    "financial_regulatory_sanctions": null,
+    "finra_registration_history": null
   },
   "experience": [
     {

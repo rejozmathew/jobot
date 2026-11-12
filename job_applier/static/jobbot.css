@@ -757,6 +757,28 @@ dialog::backdrop {background:#040c13c4;backdrop-filter:blur(5px);}
 #notice.error {background:#40282c;color:#ffd4d4;border-color:#94646b;}
 footer {padding:20px 0 28px;color:#8197a3;font-size:11px;border-color:var(--border);}
 .sr-only {position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+.profile-intro {color:var(--text-muted);max-width:70ch;}
+.profile-section {margin:14px 0;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.profile-section > summary {padding:16px;display:flex;justify-content:space-between;gap:12px;align-items:baseline;cursor:pointer;background:var(--bg-card);font-weight:600;}
+.profile-section > summary::before {content:'+';color:var(--text-muted);}
+.profile-section[open] > summary::before {content:'−';}
+.profile-section > summary > span {flex:1;}
+.profile-section > summary small {font-size:11px;font-weight:400;color:var(--text-muted);white-space:nowrap;}
+.profile-fields {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding:18px;border-top:1px solid var(--border);}
+.profile-field {min-width:0;display:flex;flex-direction:column;gap:7px;margin:0;}
+.profile-field > span {line-height:1.5;}
+.profile-field > :is(select,input,textarea) {margin:0;width:100%;box-sizing:border-box;}
+.profile-field small {color:var(--text-muted);font-size:11px;line-height:1.5;}
+.profile-field-source:empty {display:none;}
+.profile-file-sync {display:flex;align-items:center;gap:12px;flex-wrap:wrap;color:var(--text-muted);font-size:12px;margin:14px 0;}
+.profile-file-sync button {font-size:12px;}
+.profile-suggestion-note {color:var(--text-muted);font-size:12px;}
+.profile-suggestion-section > p {padding:0 16px;}
+.profile-suggestion {padding:18px;border-top:1px solid var(--border);overflow-wrap:anywhere;}
+.profile-suggestion > p {white-space:pre-wrap;}
+.profile-suggestion > details {margin:12px 0;color:var(--text-muted);font-size:12px;}
+.profile-conflict {display:block;color:#f2cc98;}
+@media(max-width:760px){.profile-fields{grid-template-columns:1fr;}.profile-section > summary{flex-wrap:wrap;}.profile-section > summary small{white-space:normal;}}
 .skip-link {position:fixed;top:-100px;left:240px;z-index:100;background:var(--accent);color:#10281d;padding:10px;}
 .skip-link:focus {top:10px;}
 summary:focus-visible,a:focus-visible {outline:2px solid var(--accent);outline-offset:4px;border-radius:3px;}

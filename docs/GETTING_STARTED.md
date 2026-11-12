@@ -71,6 +71,15 @@ It contains the supported profile fields with blank strings, empty lists and
 immigration, demographic or consent answers. `profile.example.json` is an
 identical compatibility copy; maintain the template as the field reference.
 
+The Profile page provides structured controls for the common questions in this
+template and optional immigration/licensing details. Complete your own answers;
+the template does not inherit another candidate's responses. After importing,
+the managed database owns the current profile. Set `profile_export_path` in your
+private runtime configuration if Profile saves should also update your private
+`profile.json`; use an absolute path with an existing private parent directory.
+This export can share the credential file and preserves its credential/policy
+sections. Company/job answers remain separately scoped in Learned answers.
+
 Windows PowerShell:
 
 ```powershell

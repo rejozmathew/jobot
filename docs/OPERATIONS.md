@@ -177,6 +177,16 @@ of the code release. A code rollback is not permission to restore an older datab
 
 ## Validated deployment workflow
 
+For structured-profile rollout, deploy the catalogue, services, answer resolver,
+dashboard assets, and matching templates together. No database migration is needed.
+Configure `profile_export_path` only for the intended runtime `identity_id` and
+back up the existing private file before the first export. Populate new fields
+through sourced profile saves using current revisions; keep employer/job answers
+in their existing scopes and retain older attempt snapshots. Verify the database
+hash, JSON export status, unchanged credential/policy sections, and source metadata.
+An export error leaves the database save intact and can be retried from Profile;
+it is not a reason to interrupt an application or restore an older database.
+
 Repository instructions authorize deployment of completed, tested changes to the
 existing authoritative Ubuntu runtime. They do not authorize replacing private
 configuration, discarding unrelated deployed changes or pushing unrelated remotes.

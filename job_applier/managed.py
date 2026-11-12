@@ -37,6 +37,7 @@ from .managed_discovery import DiscoveryServices
 from .job_duplicates import DuplicateServices, matching_suppression, duplicate_error, audit_duplicate_admission
 from .managed_versions import code_evidence
 from .managed_redaction import safe_text, reject_secrets, provenance_text
+from .managed_profiles import ProfileServices
 
 
 def utc_now():
@@ -46,7 +47,7 @@ def utc_now():
 from .managed_identity import canonical_url, job_key, RELATED, same_job_url, greenhouse_query_identity, workday_identity, linkedin_identity, ats_posting_key, observed_posting_key
 
 
-class Service(EventServices, AccountServices, ContinuityServices, SettingsServices, ViewServices, LearningServices, DocumentServices, ReportServices, RuntimeServices, ContextServices, ArchiveServices, SessionServices, QuestionServices, AnswerLibraryServices, QueueServices, DiscoveryServices, DuplicateServices):
+class Service(EventServices, AccountServices, ContinuityServices, SettingsServices, ViewServices, LearningServices, DocumentServices, ReportServices, RuntimeServices, ContextServices, ArchiveServices, SessionServices, QuestionServices, AnswerLibraryServices, QueueServices, DiscoveryServices, DuplicateServices, ProfileServices):
     def __init__(self, db_path, *, instance_id=None, now_fn=utc_now):
         p=Path(db_path)
         if not p.is_absolute(): raise ProtocolError('absolute_db_path_required')
@@ -390,7 +391,8 @@ class Service(EventServices, AccountServices, ContinuityServices, SettingsServic
             'email': cand['email'],
             'candidate': cand,
             'skipped': skipped,
-            'profile_hash': cand['profile_hash']
+            'profile_hash': cand['profile_hash'],
+            'file_sync': self.sync_profile_file(identity_id=cand['id'])
         }
 
     def eligibility(self, job_id, decision, *, reason):

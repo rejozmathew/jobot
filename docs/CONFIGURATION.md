@@ -52,6 +52,7 @@ match the existing installation. Do not publish a populated runtime JSON.
 | `credential_files` | Optional map from a credential name to an explicit private JSON `path` and `key`; environment values take precedence |
 | `credential_profile_path` | Explicit private account/credential source |
 | `answer_policy_profile_path` | Approved answer preferences projected into candidate data for future attempts |
+| `profile_export_path` | Optional absolute private JSON export of the configured `identity_id`'s factual profile; unset by default. Profile Save/import writes it, and the dashboard offers an explicit retry. The parent directory must already exist. It can share the credential profile file; credentials and policy sections are preserved. The managed database remains authoritative. |
 | `legacy_history_paths` | Absolute read-only history databases used to suppress recorded successes |
 | `workspaces` | Configured browser workspace definitions, described below |
 | `hermes_command` | Argument array with a `{prompt_file}` placeholder for an external executor |

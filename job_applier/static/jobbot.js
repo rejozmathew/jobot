@@ -29,7 +29,7 @@ function newRequestId(){
  const hex=Array.from(bytes,value=>value.toString(16).padStart(2,'0')).join('');
  return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
 }
-const LEGACY_ALLOWED=new Set(['identity','summary','years_experience','target_roles','industries','skills','leadership_scope','work_authorization','work_preferences','dealbreakers','eeo_information','standard_answers','experience','education','certifications','projects','languages','links','resume']);
+const LEGACY_ALLOWED=new Set(['identity','summary','years_experience','target_roles','industries','skills','leadership_scope','work_authorization','work_preferences','dealbreakers','eeo_information','standard_answers','experience','education','certifications','projects','languages','links','resume','profile_answer_sources']);
 const LEGACY_EXCLUDED=new Set(['accounts','cover_letter','login','greenhouse','automation_preferences','application_answer_policy']);
 const LEGACY_IDENTITY=new Set(['full_name','first_name','middle_name','last_name','preferred_name','email','phone','country code','address','location','linkedin','website','github']);
 function sanitizeLegacyClient(data){
@@ -45,7 +45,7 @@ function sanitizeLegacyClient(data){
  }
  return {clean,skipped:skipped.sort()};
 }
-function showLogin(){resetActivity();if($('portal-password-dialog')?.open)$('portal-password-dialog').close();$('portal-password-form')?.reset();if($('library-dialog')?.open)$('library-dialog').close();state.libraryEditing=null;state.answerPage=0;state.learnedPage=0;state.answerSelections={};state.answerMode='inbox';state.learnedMode='current';state.answerHistory=null;state.answerHistoryRequest=null;state.answerReceipt=null;state.learnedKey=null;state.answerDrafts.clear();state.answerKey=null;for(const id of ['answer-groups','answer-list','answer-pagination','learned-list','learned-detail','learned-pagination','answer-receipt'])$(id)?.replaceChildren();if($('answer-receipt'))$('answer-receipt').hidden=true;if($('answer-count'))$('answer-count').textContent='';state.instance=null;state.view=null;state.run=null;state.attempt=null;state.queueKey=null;state.settingsVersion=null;state.profileCandidate=null;state.selected.clear();for(const id of ['queue-rows','account-rows','history','attempts','events','health','instance','run-owner','focused-context','target-list','extension-list','lesson-list','helper-list','asset-list','assessment-list','profile-import-skipped'])$(id)?.replaceChildren();for(const f of document.querySelectorAll('form'))f.reset();$('console').hidden=true;$('login-panel').hidden=false;$('refresh').hidden=true;$('mode').textContent='Disconnected';if($('profile-hash'))$('profile-hash').textContent='';if($('profile-id'))$('profile-id').textContent='';if($('profile-person-key'))$('profile-person-key').textContent='';if($('profile-resume'))$('profile-resume').textContent='None';if($('main-resume-filename'))$('main-resume-filename').textContent='None registered';}
+function showLogin(){state.profileEditor=null;state.profileHash=null;state.profilePromotions=new Map();for(const id of ['profile-question-sections','profile-suggestions','profile-file-sync','profile-json-error'])$(id)?.replaceChildren();resetActivity();if($('portal-password-dialog')?.open)$('portal-password-dialog').close();$('portal-password-form')?.reset();if($('library-dialog')?.open)$('library-dialog').close();state.libraryEditing=null;state.answerPage=0;state.learnedPage=0;state.answerSelections={};state.answerMode='inbox';state.learnedMode='current';state.answerHistory=null;state.answerHistoryRequest=null;state.answerReceipt=null;state.learnedKey=null;state.answerDrafts.clear();state.answerKey=null;for(const id of ['answer-groups','answer-list','answer-pagination','learned-list','learned-detail','learned-pagination','answer-receipt'])$(id)?.replaceChildren();if($('answer-receipt'))$('answer-receipt').hidden=true;if($('answer-count'))$('answer-count').textContent='';state.instance=null;state.view=null;state.run=null;state.attempt=null;state.queueKey=null;state.settingsVersion=null;state.profileCandidate=null;state.selected.clear();for(const id of ['queue-rows','account-rows','history','attempts','events','health','instance','run-owner','focused-context','target-list','extension-list','lesson-list','helper-list','asset-list','assessment-list','profile-import-skipped'])$(id)?.replaceChildren();for(const f of document.querySelectorAll('form'))f.reset();$('console').hidden=true;$('login-panel').hidden=false;$('refresh').hidden=true;$('mode').textContent='Disconnected';if($('profile-hash'))$('profile-hash').textContent='';if($('profile-id'))$('profile-id').textContent='';if($('profile-person-key'))$('profile-person-key').textContent='';if($('profile-resume'))$('profile-resume').textContent='None';if($('main-resume-filename'))$('main-resume-filename').textContent='None registered';}
 function showConsole(){state.profileDirty=false;$('console').hidden=false;$('login-panel').hidden=true;$('refresh').hidden=false;}
 function choice(id,items,value){const select=$(id),before=value??select.value;select.replaceChildren();for(const [v,label]of items){const option=el('option',label);option.value=v;select.append(option);}if(items.some(x=>x[0]===before))select.value=before;}
 function submitted(job){return ['applied','already_applied'].includes(job.status);}
@@ -1117,6 +1117,58 @@ function renderSettings(s){
   input.dataset.setting=key;input.dataset.kind=Array.isArray(value)?'list':(value===null?'nullable':typeof value);label.append(input);(discoveryLabels[key]&&discoveryBox?discoveryBox:box).append(label);
  }
 }
+function profileValue(profile,path){return path.split('.').reduce((v,k)=>v&&typeof v==='object'?v[k]:undefined,profile);}
+function setProfileValue(profile,path,value){const keys=path.split('.');let at=profile;for(const key of keys.slice(0,-1)){if(!at[key]||typeof at[key]!=='object'||Array.isArray(at[key]))at[key]=key==='work_authorization'&&typeof at[key]==='string'?{status:at[key]}:{};at=at[key];}at[keys.at(-1)]=value;}
+function profileDraft(){const data=JSON.parse($('profile-json').value);if(!data||typeof data!=='object'||Array.isArray(data))throw Error('Profile JSON must be an object.');return data;}
+function profileDisplay(value){return value===true?'Yes':value===false?'No':value===null||value===undefined||value===''?'Not answered':String(value);}
+function profileFieldValue(profile,field){let value=profileValue(profile,field.path);if(field.path==='work_authorization.status'&&typeof profile.work_authorization==='string')value=profile.work_authorization;if(value===null||value===undefined){const values=(field.mirrors||[]).map(path=>profileValue(profile,path)).filter(v=>v!==null&&v!==undefined);if(values.length&&values.every(v=>v===values[0]))value=values[0];}if(field.path==='standard_answers.authorized_to_work_us'&&!Object.hasOwn(profile.standard_answers||{},'authorized_to_work_us')&&!Object.hasOwn(profile.work_authorization||{},'legally_authorized_us'))value=profile.standard_answers?.legally_authorized_to_work??value;return value;}
+function editProfileField(field,value,source){
+ const profile=profileDraft();setProfileValue(profile,field.path,value);for(const mirror of field.mirrors||[])setProfileValue(profile,mirror,value);
+ state.profilePromotions??=new Map();if(source)state.profilePromotions.set(field.path,source);else state.profilePromotions.delete(field.path);
+ $('profile-json').value=JSON.stringify(profile,null,2);$('profile-json-error').textContent='';state.profileDirty=true;return profile;
+}
+function renderProfileFields(profile,sections){
+ const box=$('profile-question-sections'),open=new Map([...box.querySelectorAll('details[data-section]')].map(n=>[n.dataset.section,n.open]));box.replaceChildren();
+ for(const section of sections||[]){
+  const detail=el('details',undefined,'profile-section');detail.dataset.section=section.id;detail.open=open.get(section.id)??section.id==='screening';
+  const answered=section.fields.filter(f=>![undefined,null,''].includes(profileFieldValue(profile,f))).length;
+  const summary=el('summary');summary.append(el('span',section.title),el('small',`${answered} of ${section.fields.length} answered${section.optional?' · Optional':''}`));detail.append(summary);
+  const grid=el('div',undefined,'profile-fields');
+  for(const field of section.fields){
+   const label=el('label',undefined,'profile-field');label.append(el('span',field.label));let input;const value=profileFieldValue(profile,field);
+   if(field.kind==='boolean'){input=el('select');for(const [val,text] of [['','Not answered'],['true','Yes'],['false','No']]){const option=el('option',text);option.value=val;input.append(option);}input.value=typeof value==='boolean'?String(value):'';}
+   else if(field.kind==='number'){input=el('input');input.type='number';input.step='any';if(field.min!==undefined)input.min=field.min;if(field.max!==undefined)input.max=field.max;input.value=typeof value==='number'?value:'';input.placeholder='Not answered';}
+   else{input=el('textarea');input.rows=2;input.value=value??'';input.placeholder='Not answered';}
+   input.id='profile-field-'+field.path.replaceAll('.','-');input.dataset.profileField=field.path;input.dataset.profileKind=field.kind;
+   const source=profile.profile_answer_sources?.[field.path],evidence=el('small',source?`${source.source_type==='profile_edit'?'Updated in Profile':'From a saved answer'} · ${stamp(source.saved_at)}`:'','profile-field-source');if(source?.question)evidence.title=source.question;
+   input.oninput=()=>{try{const answer=field.kind==='boolean'?(input.value===''?null:input.value==='true'):field.kind==='number'?(input.value===''?null:Number(input.value)):input.value;editProfileField(field,answer);evidence.textContent='Unsaved change';}catch{notice('Correct the Advanced Factual JSON before editing these questions.',true);}};
+   label.append(input);if(field.help)label.append(el('small',field.help));label.append(evidence);grid.append(label);
+  }
+  detail.append(grid);box.append(detail);
+ }
+}
+function renderProfileSuggestions(editor){
+ const box=$('profile-suggestions');box.replaceChildren();const unique=new Map();
+ for(const item of editor.suggestions||[]){if(item.status==='current')continue;const key=item.field+':'+JSON.stringify(item.value);if(!unique.has(key))unique.set(key,item);}
+ if(!unique.size){box.append(el('p','Your compatible saved answers are already represented, or no new suggestions are available.','profile-suggestion-note'));return;}
+ const detail=el('details',undefined,'profile-section profile-suggestion-section');detail.append(el('summary',`${unique.size} suggestions from saved answers`));
+ detail.append(el('p','Choose answers to add to your profile, then save. Company and job-specific answers are kept separate.'));
+ for(const item of unique.values()){
+  const card=el('div',undefined,'profile-suggestion');card.append(el('strong',item.label));
+  card.append(el('p',`Current: ${profileDisplay(item.current)} · Suggested: ${profileDisplay(item.value)}`));
+  if(item.status==='conflict')card.append(el('small','Saved responses differ. Choose the response that applies now.','profile-conflict'));
+  const source=el('details');source.append(el('summary',`Source: ${item.source_type==='answer_library'?'learned answer':'saved response'} · ${stamp(item.saved_at)}`),el('p',item.question));card.append(source);
+  const use=el('button','Use saved answer');use.type='button';use.onclick=()=>{try{const field=editor.sections.flatMap(s=>s.fields).find(f=>f.path===item.field);const profile=editProfileField(field,item.value,{field:item.field,entry_id:item.entry_id,question_id:item.question_id,revision:item.revision});renderProfileFields(profile,editor.sections);use.textContent='Added to draft';notice('Answer added to the draft. Save profile to keep it.');}catch(error){notice(error.message,true);}};
+  card.append(use);detail.append(card);
+ }
+ box.append(detail);
+}
+function profileSaveMessage(sync){return sync?.status==='synced'?' Saved to the database and private profile JSON.':sync?.status==='error'?' Saved to the database; private JSON sync needs attention.':' Saved to the database.';}
+function renderProfileFileSync(sync){
+ const box=$('profile-file-sync');box.replaceChildren();const status=sync?.status||'not_configured';
+ box.append(el('span',({synced:'Saved profile is synced to the private JSON file.',not_configured:'Profile is stored in the database. Private JSON export is not configured for this candidate.',out_of_date:'The private JSON file needs syncing with the saved profile.',error:'The profile is saved in the database; the private JSON file could not be synced.'})[status]));
+ if(['out_of_date','error'].includes(status)){const retry=el('button','Sync saved profile to JSON');retry.type='button';retry.onclick=async()=>{try{const result=await api('sync_profile_file',{identity_id:state.profileCandidate});renderProfileFileSync(result);notice(result.status==='synced'?'Saved profile synced to private JSON.':'Private JSON sync needs attention. The database profile remains saved.',result.status==='error');}catch(error){notice(error.message,true);}};box.append(retry);}
+}
 async function renderProfile(v){
  const candidates=v.candidates||[];
  if(!candidates.length){
@@ -1129,30 +1181,38 @@ async function renderProfile(v){
   if($('profile-full-name'))$('profile-full-name').value='';
   if($('profile-work-auth'))$('profile-work-auth').value='';
   if($('profile-json'))$('profile-json').value='{}';
+  $('profile-question-sections').replaceChildren();$('profile-suggestions').replaceChildren();$('profile-file-sync').replaceChildren();state.profileEditor=null;
   if($('profile-resume'))$('profile-resume').textContent='None';
   if($('main-resume-filename'))$('main-resume-filename').textContent='None registered';
   return;
  }
- const currentId=state.profileCandidate||candidates[0].id;
+ const currentId=candidates.find(c=>c.id===state.profileCandidate)?.id||candidates.find(c=>c.id===v.dispatch_queue?.selection?.identity_id)?.id||candidates[0].id;
  state.profileCandidate=currentId;
  const knowledge=$('profile-knowledge');knowledge.replaceChildren();const learned=(v.answer_library?.entries||[]).filter(e=>e.identity_id===currentId&&e.state==='active'&&e.origin!=='legacy');
  knowledge.append(el('h3','Experience & application answers'),el('p',`${learned.length} reusable answers belong to this profile. These supplement your profile facts and keep their original sources, scope and reuse evidence.`));
  const browse=el('button','View this profile’s learned answers');browse.type='button';browse.onclick=()=>{state.learnedMode='current';state.learnedPage=0;state.learnedKey=null;$('learned-search').value=candidates.find(c=>c.id===currentId)?.email||currentId;renderLearnedAnswers(v);tab('learned');};knowledge.append(browse);
  const add=el('button','Add experience or preference');add.type='button';add.onclick=()=>editLibraryAnswer({identity_id:currentId});knowledge.append(add);
  choice('profile-candidate',candidates.map(c=>[c.id,`${c.email} (${c.id})`]),currentId);
+ if(state.profileDirty)return;
+ const requestId=state.profileRequest=(state.profileRequest||0)+1;
  try{
-  const cand=await api('candidate',{identity_id:currentId});
+  const editor=await api('profile_editor',{identity_id:currentId});
+  if(state.profileCandidate!==currentId||state.profileRequest!==requestId||state.profileDirty)return;
+  if(state.profileEditor&&JSON.stringify(state.profileEditor)===JSON.stringify(editor))return;
+  const cand=editor.candidate;
   if($('profile-id'))$('profile-id').textContent=cand.id;
   if($('profile-person-key'))$('profile-person-key').textContent=cand.person_key;
   if($('profile-hash'))$('profile-hash').textContent=`Hash: ${cand.profile_hash.slice(0,16)}...`;
   const prof=cand.profile||{};
   const idSec=prof.identity||{};
   if(!state.profileDirty){
+   state.profileEditor=editor;state.profileHash=cand.profile_hash;state.profilePromotions=new Map();
    $('profile-email').value=cand.email;
    $('profile-full-name').value=idSec.full_name||'';
    const auth=prof.work_authorization??prof.facts?.work_authorization??'';
    $('profile-work-auth').value=typeof auth==='string'?auth:JSON.stringify(auth);
    $('profile-json').value=JSON.stringify(prof,null,2);
+   $('profile-json-error').textContent='';renderProfileFields(prof,editor.sections);renderProfileSuggestions(editor);renderProfileFileSync(editor.file_sync);
   }
   const resume=cand.resume_asset?.provenance?.filename||(cand.resume_asset?.storage_ref?cand.resume_asset.storage_ref.split('/').pop():'None registered');
   if($('profile-resume'))$('profile-resume').textContent=resume;
@@ -1325,20 +1385,24 @@ $('helper-form').onsubmit=async e=>{e.preventDefault();try{const scope={};if($('
 $('asset-form').onsubmit=async e=>{e.preventDefault();try{await api('register_asset',{identity_id:$('asset-identity').value,kind:$('asset-kind').value,version:$('asset-version').value,storage_ref:$('asset-ref').value,sha256:$('asset-hash').value,provenance:{source:$('asset-source').value}});notice('External document metadata registered; not selected or uploaded.');$('asset-form').reset();await refresh();}catch(err){notice(err.message,true);}};
 $('asset-select-form').onsubmit=async e=>{e.preventDefault();try{await api('select_asset',{asset_id:$('select-asset').value,job_id:$('select-asset-job').value});notice('Document selected for job; upload not yet confirmed.');await refresh();}catch(err){notice(err.message,true);}};
 $('profile-form').oninput=()=>{state.profileDirty=true;};
-$('profile-candidate').onchange=async()=>{state.profileDirty=false;state.profileCandidate=$('profile-candidate').value;await renderProfile(state.view);};
+$('profile-email').oninput=()=>{try{const profile=profileDraft();setProfileValue(profile,'identity.email',$('profile-email').value.trim());$('profile-json').value=JSON.stringify(profile,null,2);}catch{notice('Correct the Advanced Factual JSON before editing identity fields.',true);}};
+$('profile-full-name').oninput=()=>{try{const profile=profileDraft();setProfileValue(profile,'identity.full_name',$('profile-full-name').value);$('profile-json').value=JSON.stringify(profile,null,2);}catch{notice('Correct the Advanced Factual JSON before editing identity fields.',true);}};
+$('profile-json').onchange=()=>{try{const profile=profileDraft();$('profile-json-error').textContent='';$('profile-email').value=profile.identity?.email||state.profileEditor?.candidate.email||'';$('profile-full-name').value=profile.identity?.full_name||'';renderProfileFields(profile,state.profileEditor?.sections);}catch{$('profile-json-error').textContent='Correct the JSON to update the structured questions.';}};
+$('profile-candidate').onchange=async()=>{state.profileDirty=false;state.profileEditor=null;state.profilePromotions=new Map();state.profileCandidate=$('profile-candidate').value;await renderProfile(state.view);};
+$('profile-reload').onclick=async()=>{state.profileDirty=false;state.profileEditor=null;state.profilePromotions=new Map();await renderProfile(state.view);};
 $('profile-form').onsubmit=async e=>{e.preventDefault();try{
- let prof={};try{prof=JSON.parse($('profile-json').value);}catch{throw Error('Profile JSON must be valid JSON');}
+ const prof=profileDraft();
  const email=$('profile-email').value.trim();
  if(!email||!email.includes('@'))throw Error('Valid email required');
- const idSec=prof.identity||{};idSec.email=email;if($('profile-full-name').value.trim())idSec.full_name=$('profile-full-name').value.trim();prof.identity=idSec;
- const auth=$('profile-work-auth').value.trim();
- if(auth)prof.work_authorization=/^[{[]/.test(auth)?JSON.parse(auth):auth;
- const r=await api('import_profile',{data:prof,identity_id:state.profileCandidate});
- state.profileDirty=false;
- state.profileCandidate=r.candidate.id;
- notice(`Profile saved for candidate ${r.candidate.id}.`+(r.skipped.length?' Unsupported fields omitted: '+r.skipped.join(', '):''));
+ const idSec=prof.identity||{};idSec.email=email;idSec.full_name=$('profile-full-name').value.trim();prof.identity=idSec;
+ if(!state.profileEditor)throw Error('Wait for the profile to load before saving.');
+ const promotions=[...(state.profilePromotions?.values()||[])].filter(p=>{const source=state.profileEditor.suggestions.find(s=>s.field===p.field&&s.revision===p.revision&&(p.entry_id?s.entry_id===p.entry_id:s.question_id===p.question_id));return source&&JSON.stringify(source.value)===JSON.stringify(profileValue(prof,p.field));});
+ const draft=$('profile-json').value,identity=state.profileCandidate;
+ const r=await api('save_profile',{profile:prof,identity_id:identity,expected_profile_hash:state.profileHash,promotions});
+ if(state.profileCandidate===identity){state.profileHash=r.candidate.profile_hash;state.profileDirty=$('profile-json').value!==draft;if(!state.profileDirty)state.profilePromotions=new Map();renderProfileFileSync(r.file_sync);}
+ notice('Profile saved.'+profileSaveMessage(r.file_sync)+(state.profileDirty?' Your newer draft changes are still unsaved.':''),r.file_sync?.status==='error');
  await refresh();
-}catch(err){notice(err.message,true);}};
+}catch(err){notice(({profile_revision_conflict:'This profile changed elsewhere. Your draft is still here; reload the profile to review the latest saved answers.',profile_source_changed:'A selected saved answer changed. Your draft is still here; reload the profile to review its latest source.',identity_immutable:'Use Import to create a profile with a different email. The selected candidate’s email stays attached to its history.',invalid_profile_answer:'One profile answer has an invalid value. Check the structured fields and JSON.'})[err.message]||err.message,true);}};
 $('profile-import-file').onchange=async e=>{
  const file=e.target.files?.[0];if(!file)return;
  const reader=new FileReader();
@@ -1353,7 +1417,7 @@ $('profile-import-file').onchange=async e=>{
    const res=await api('import_profile',{data:clean,identity_id:state.profileCandidate});
    state.profileDirty=false;
    state.profileCandidate=res.candidate.id;
-   notice(`Imported profile for ${res.candidate.email} (${res.candidate.id}); ${skipped.length} excluded fields skipped.`);
+   notice(`Imported profile for ${res.candidate.email}; ${skipped.length} excluded fields skipped.`+profileSaveMessage(res.file_sync),res.file_sync?.status==='error');
    e.target.value='';
    await refresh();
   }catch(err){notice(err.message,true);e.target.value='';}

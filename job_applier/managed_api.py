@@ -25,6 +25,7 @@ OPERATOR=OPERATOR|frozenset({'model_catalog'})
 OPERATOR=OPERATOR|frozenset({'activity_stats'})
 OPERATOR=OPERATOR|frozenset({'set_portal_password','remove_portal_password'})
 OPERATOR=OPERATOR|frozenset({'duplicate_matches','set_duplicate_match_state'})
+OPERATOR=OPERATOR|frozenset({'profile_editor','save_profile','sync_profile_file'})
 WORKER=frozenset({'accept_run','claim','heartbeat','event','action_start','action_end','writer_state','submission_intent','finish','ack_control','ack_run_control','checkpoint','resume_run'})|READS
 WORKER=WORKER|frozenset({'observe_owned_lesson','report_upload','record_account_event','extend_budget','bind_target','target_state','request_mail_for_attempt','match_mail_for_attempt','browser_observe'})
 WORKER=WORKER|frozenset({'request_question','park_questions','answer_from_user','questions_for_attempt'})

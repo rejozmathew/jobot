@@ -291,16 +291,50 @@ employer acceptance. See [Activity statistics](jobbot-v1/ACTIVITY_STATS.md).
 
 ## Profile
 
-Select the candidate and inspect identity, email, full name, work authorization
-and selected resume. **Advanced Factual JSON** contains candidate facts, without
-account passwords or other secrets. **Save profile** updates future snapshots;
-existing attempt snapshots retain their recorded facts.
+Select the candidate and edit **Screening & background**, **Employment & outside
+activities**, **Work authorization**, **Work preferences & availability**,
+**Compensation preferences**, and **Communication & verification**. Additional
+immigration and government/licensing questions are in optional expandable sections.
+Each section shows how many answers are populated. Yes/no controls distinguish
+**Not answered**, **Yes**, and **No**; an unset value never supplies a personal default.
+Background-check consent, drug-test consent, felony convictions, other criminal
+convictions, and arrests are separate facts. Question-specific definitions and
+exceptions remain relevant when an employer asks different wording.
+
+**Suggestions from saved answers** shows compatible general learned answers and
+explicit saved responses, their source question/date, the current profile value,
+and any conflicting responses. **Use saved answer** adds the chosen value to the
+draft. **Save profile** persists the draft and source revision. Company/job-scoped
+answers and mismatched country qualifiers are not promoted by this action. Editing
+a field directly records it as a profile edit; the original learned entry and
+answer history remain intact.
+
+**Advanced Factual JSON** edits the same draft and preserves additional candidate
+facts, without account passwords or other secrets. Polling does not replace unsaved
+edits or their original revision; unchanged refreshes preserve focus and open
+suggestions. **Reload saved profile** discards the current draft. A conflicting
+save leaves the draft visible.
+Save changes the current candidate and reconciles eligible pending questions;
+new attempts use the updated profile. Existing attempt snapshots and explicit
+application-specific human responses retain their recorded values.
+
+The profile is stored in the managed database. When the installation configures
+`profile_export_path` for its selected candidate, saving or importing also updates
+that private JSON file. The page reports whether it is synced and offers **Sync
+saved profile to JSON** after an export failure. A file-write failure does not undo
+the database save or stop applications. The export preserves account credentials,
+password overrides, policy configuration, and legacy resume text. Editing an
+exported file outside Jobot does not silently import its values into the database.
 
 **Experience & application answers** connects the selected profile to its reusable
 knowledge. **View this profile’s learned answers** opens that candidate’s answers;
 **Add experience or preference** adds a sourced, scoped reusable answer without
 duplicating it into the factual JSON. Existing entries remain editable in Learned
-answers, with earlier versions and application evidence retained.
+answers, with earlier versions and application evidence retained. Employer/job
+exceptions take precedence over a matching general profile answer. For recognized
+structured questions, the current profile takes precedence over general learned
+answers; explicit human responses to the actual application take precedence over
+both. Unrecognized or more qualified wording returns to ordinary executor handling.
 
 **Import & Resume Assets** can import factual data from a legacy JSON file. It
 excludes credentials, secrets and policy fields from that factual import and
