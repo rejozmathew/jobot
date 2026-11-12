@@ -14,7 +14,7 @@ def dashboard_check(check):
 const fs=require('fs'),{JSDOM}=require(process.argv[1]),d=JSON.parse(fs.readFileSync(0,'utf8'));
 const w=new JSDOM(d.html,{url:'http://localhost/',runScripts:'outside-only'}).window;
 w.setInterval=callback=>{w.pollRefresh=callback;return 0;};w.fetch=()=>new Promise(()=>{});
-w.eval(d.script+'\nwindow.draw=v=>{state.view=v;renderQueue(v)};window.drawAnswers=v=>{state.view=v;renderAnswers(v)};window.drawAccounts=v=>{state.view=v;renderAccounts(v)};window.disconnect=showLogin;window.drawSettings=renderSettings;window.drawModelSelection=c=>{state.modelCatalog=c;renderModelSelection()};window.noRefresh=()=>{refresh=async()=>{}};window.startRefresh=()=>{state.instance="fixture";state.modelCatalog={providers:[]};return refresh()};window.refreshAPI=handler=>{window.fetch=async path=>({ok:true,status:200,json:()=>handler(path.slice(4))})};');
+w.eval(d.script+'\nwindow.draw=v=>{state.view=v;renderQueue(v)};window.drawAnswers=v=>{state.view=v;renderAnswers(v)};window.drawAccounts=v=>{state.view=v;renderAccounts(v)};window.disconnect=showLogin;window.drawSettings=renderSettings;window.drawProfile=renderProfile;window.drawModelSelection=c=>{state.modelCatalog=c;renderModelSelection()};window.noRefresh=()=>{refresh=async()=>{}};window.startRefresh=()=>{state.instance="fixture";state.modelCatalog={providers:[]};return refresh()};window.refreshAPI=handler=>{window.fetch=async path=>({ok:true,status:200,json:()=>handler(path.slice(4))})};');
 const doc=w.document;
 const v={jobs:[],candidates:[],assets:[],answer_queue:{groups:[]},
  dispatch_queue:{installed:true,worker_online:true,enabled:true,counts:{},items:[]},

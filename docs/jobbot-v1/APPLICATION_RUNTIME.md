@@ -1,5 +1,30 @@
 # Application runtime: ownership, helper map, and rationale
 
+## November 7: Dayforce manual application attribution
+
+Dayforce can add Simplify attribution while changing the locale on an owned
+manual application route. The shared scope comparator treats the observed
+`ref=Simplify` with `src=Simplify` or `source=Simplify` as attribution only on
+the hosted HTTPS `/apply/manualApplication` route with `applicationSource=Manual`.
+Tenant, numeric posting, host and scheme still have to agree. Extra query keys,
+duplicates and other values still use the existing identity comparison, and
+sensitive routes retain their existing guards. The comparison leaves intake and
+history keys intact. Existing browser and recovery callers can continue in the
+same session with the original operator deadline and confirmation requirements.
+
+## November 6: Dayforce portal casing during locale recovery
+
+The existing shared `managed_identity.is_same_application_scope` comparison
+recognizes Dayforce's `candidateportal` route segment regardless of its display
+casing when a locale prefix is added or removed. The earlier normalization
+recognized only uppercase `CANDIDATEPORTAL`, so a lowercase route could be
+misclassified as a different posting after Simplify changed its locale prefix.
+The correction uses the same tenant, posting, host, scheme and query comparison;
+it does not rewrite intake URLs or historical identity keys. Existing browser,
+helper and recovery callers inherit the correction. No helper/caller is added,
+and submission evidence, Simplify order, approved answers, operator stops,
+application deadlines and retry schedules retain their existing behavior.
+
 ## October 22: harness-independent host dependencies and reset requests
 
 The existing `workspace_host.ensure_host` caller prefers the repository virtualenv
@@ -518,6 +543,11 @@ trigger is Greenhouse-only and requires a current incomplete verification group;
 the flag reports the executor's observation that the requested email is absent.
 Other ATS email flows do not acquire a timed reload policy. The
 existing native/portable caller and workspace host still resolve the owned target.
+On a custom parent page, the helper uses its existing ownership-checked frame
+discovery to identify the Greenhouse application before routing this recovery.
+An unknown parent hostname alone does not reject an accepted embedded form.
+Current verification evidence still determines whether a reload is needed;
+an ordinary form resumes without reloading, and unrelated ATS routing is retained.
 `greenhouse_fast.advance` calls shared `application_runtime.browser_action` reload,
 then reconnects to the fresh document and runs its normal Simplify/residual/submit
 path within the remaining call slice. The existing runtime keeps the overall
@@ -955,6 +985,13 @@ full URL before and after reading; public URLs omit authentication queries.
 preserving owned snapshots/screenshots and navigation back to the assigned job.
 Navigation during observation prevents quiescence.
 
+A location-free Workday entry can recover to the canonical posting or manual
+application on the same hosted career site when both routes carry the same
+complete requisition. The short entry and canonical recovery route must have
+empty canonical queries. This supplements existing same-attempt navigation
+and observation. Intake keys, account evidence, ownership checks, Simplify
+settlement and the frozen deadline retain their existing behavior.
+
 ## Actual startup and call sequence
 
 Configuration selection is `--config`, then `JOBBOT_CONFIG`, then the ignored
@@ -1224,7 +1261,7 @@ history are not migrated or rewritten. Missing direct URLs remain unclassified.
 | static/jobbot.js / managed_api.py / managed.py.update_job_url | Operator URL corrections retain the job number, added date, outcomes, source references and old identity aliases; save normalized replacement aliases and an audit trail on the same job. Sorting and filters use existing job data in the dashboard. |
 | static/jobbot.js / managed_queue.py | Queue selected sends visible selection in table order as one immediate request; queued items are reused and receipt insertion order breaks equal-time ties. Repeated requests retain their original position; a new manual selection can reorder its waiting jobs. Current applications continue, automatic scheduling remains enabled or paused as configured. |
 | managed.py / managed_runtime.py / managed_events.py / managed_views.py / managed_continuity.py | Existing policy/actions/events/duplicates consult local lifecycle or explicit legacy ownership |
-| managed_identity.py | Workday host/site/full-requisition and iCIMS host/job-id comparison, history equivalence, application scope and diagnostic match states; Rippling locale presentation is ignored only on its hosted tenant/full-UUID route, and Dayforce locale presentation only on its hosted tenant/CANDIDATEPORTAL/numeric-posting route. Existing frame router, runtime, credentials and binding callers share scope matching; intake URLs and history keys remain unchanged. |
+| managed_identity.py | Workday host/site/full-requisition and iCIMS host/job-id comparison, history equivalence, application scope and diagnostic match states; Rippling locale presentation is ignored only on its hosted tenant/full-UUID route, and Dayforce locale presentation only on its hosted tenant/CANDIDATEPORTAL/numeric-posting route. The exact Simplify attribution bundles are equivalent on its HTTPS manual application route. Existing frame router, runtime, credentials and binding callers share scope matching; intake URLs and history keys remain unchanged. |
 | route_history.py / managed_sessions.handoff_target | Called by managed_runtime.browser_observe before scope reads; retains local owned main-document history evidence and atomically projects delayed same-origin continuations. A fenced retained history source remains valid after an accepted Apply handoff changes the target key; source, browser/session/target/fence, current identity and same-origin/conflict checks still apply. The iCIMS reader refreshes context through this shared observer before inspecting a changed embedded form. No browser writes, account migration, retry decision or application outcome. |
 | managed_shared.submission_state / submission_pending and managed_events._submission_state / _submission_pending | One per-attempt evidence projection from existing ordered events; evidence reporting only; accepted alone suppresses a new requested attempt |
 | greenhouse_fast.py | Session-owned `greenhouse_advance` residual batches; next_operation/startup guidance, local workspace host and nonlocal plugin dispatch call the same advance entry. Simplify remains the bulk filler. Legacy platform_handlers/greenhouse.py stays available to its existing agent/registry callers. |
@@ -1237,6 +1274,7 @@ history are not migrated or rewritten. Missing direct URLs remain unclassified.
 | browser_frames.py / cdp_client.py channels | Shared DOM-owned application document routing below the existing browser API, isolated worlds, stale-ref rejection and root pointer mapping |
 | managed_queue._settle_reconciled_queue | Called inside successful manual reconciliation; atomically settles only queued rows for the related job and same identity. Existing stopped-session/newer-attempt checks and dispatched/history rows remain intact. |
 | managed_answer_library.py / migration 26 | Current candidate-scoped knowledge, aliases, applicability, append-only revisions and synthesis provenance; called by profile writes, question capture, operator APIs, application context, shared saved_answer and the dispatcher minute reconciliation. No browser/helper outcome authority. |
+| profile_questions.py / managed_profiles.py | Shared structured-question catalogue and explicit wording mappings, used by the Profile editor, approved_answer, and managed_answer_library. Operator saves retain source revisions in candidate JSON; optional profile_export_path mirrors factual data to the selected private file. Human application answers and scoped exceptions retain priority. No browser calls or application lifecycle authority. |
 | answer_learning.py / answer_learning_model.py / migration 27 | Dashboard-owned background synthesis, equivalent-answer merging and question wording review; uses the installed Hermes auxiliary inference client without application tools/sessions. Called by queue_runtime.serve; human saves enqueue durable inputs in the same database. No application/helper outcome authority. |
 | job_duplicates.py / migration 29 | Called by configured intake, the dashboard background worker and shared admission checks. Optional cached local embeddings propose same-company role matches; matching_suppression rechecks candidate success or explicit operator cancellation for new admissions in enforce mode. Stores reversible pair decisions and first actual skip receipts with the real reason, without creating URL/ownership aliases or copying dispositions. |
 | daily_summary.py / hermes_notifications.py | The existing notification watcher calls a read-only calendar-day projection at the configured morning time. Counts submissions, attempts, actual duplicate skips and sixth-dispatch exhaustion; private delivery receipts prevent ordinary restart replays. No application outcome authority. |

@@ -17,7 +17,7 @@ from test_local_sessions import setup, connect
 
 
 @asynccontextmanager
-async def popup_fixture(tmp_path, *, redirect=True, conflict=False, hosts=('jobs.example.test', 'forms.example.test'), posting_path='/jobs/123', tls=False):
+async def popup_fixture(tmp_path, *, redirect=True, conflict=False, hosts=('jobs.example.test', 'forms.example.test'), posting_path='/jobs/123', tls=False, deadline_minutes=None):
     receipts = []
 
     class Handler(BaseHTTPRequestHandler):
@@ -78,13 +78,19 @@ async def popup_fixture(tmp_path, *, redirect=True, conflict=False, hosts=('jobs
             service, asset, _, workspaces, config = setup(tmp_path/'ledger')
             workspaces[0].update(cdp_url=page.fixture_endpoint, mode='headless')
             service.configure_workspaces(workspaces)
-            service.configure({'mode':'pilot', 'autofill':'native', 'browser_mode':'headless',
-                               'submission_mode':'submit'}, expected_version=service.settings_view()['version'])
+            settings = {'mode':'pilot', 'autofill':'native', 'browser_mode':'headless',
+                        'submission_mode':'submit'}
+            metadata = {}
+            if deadline_minutes is not None:
+                from job_applier.application_deadline import freeze
+                settings['application_time_limit_minutes'] = deadline_minutes
+                metadata = freeze({}, settings, service.now())
+            service.configure(settings, expected_version=service.settings_view()['version'])
             job = service.intake(url=source)
             service.eligibility(job['id'], 'ready', reason='Synthetic approved application')
             session = connect(service, service.reserve_session(request_id='popup', job_id=job['id'],
                 identity_id='candidate', driver_id='fixture', workspace_ids=['workspace-0'],
-                concurrency_limit=1, resume_asset_id=asset['id']), page.target_id)
+                concurrency_limit=1, resume_asset_id=asset['id'], metadata=metadata), page.target_id)
             service.session_authority = (session['id'], 'fixture', 'host-workspace-0')
             attempt = service.attempt(session['attempt_id'])
             owner = {k:attempt[k] for k in ('worker_id','fence')}

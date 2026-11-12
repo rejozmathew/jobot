@@ -11,6 +11,7 @@
   "spool_dir": "/home/REPLACE/.local/share/jobbot/private-spool",
   "credential_profile_path": "/home/REPLACE/.config/jobbot/existing-private-profile.json",
   "answer_policy_profile_path": "/home/REPLACE/.config/jobbot/existing-private-profile.json",
+  "profile_export_path": "/home/REPLACE/.config/jobbot/existing-private-profile.json",
   "mailbox_provider": "himalaya",
   "himalaya_executable": "/home/REPLACE/.local/bin/himalaya",
   "himalaya_account": "REPLACE_WITH_EXISTING_APPLICATION_MAIL_ACCOUNT",

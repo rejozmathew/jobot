@@ -75,7 +75,7 @@ LEGACY_ALLOWED_SECTIONS = frozenset({
     'identity', 'summary', 'years_experience', 'target_roles', 'industries',
     'skills', 'leadership_scope', 'work_authorization', 'work_preferences',
     'dealbreakers', 'eeo_information', 'standard_answers', 'experience',
-    'education', 'certifications', 'projects', 'languages', 'links', 'resume'
+    'education', 'certifications', 'projects', 'languages', 'links', 'resume', 'profile_answer_sources'
 })
 LEGACY_EXCLUDED_SECTIONS = frozenset({
     'accounts', 'cover_letter', 'login', 'greenhouse',

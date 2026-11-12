@@ -74,7 +74,7 @@ def ats_posting_identity(url, *, namespace=None, source_id=None):
 
 
 def ats_posting_key(url, *, namespace=None, source_id=None):
-    identity=ats_posting_identity(url,namespace=namespace,source_id=source_id)
+    identity=ats_posting_identity(url,namespace=namespace,source_id=source_id) or workday_identity(url, location_optional=True)
     return hashlib.sha256(dumps(['ats_posting',identity]).encode()).hexdigest() if identity else None
 
 
@@ -245,7 +245,7 @@ def _workday_url(url):
     except (ValueError, ProtocolError):return None
 
 
-def workday_identity(url):
+def workday_identity(url, *, location_optional=False):
     parsed = _workday_url(url)
     if not parsed:return None
     p, parts = parsed
@@ -260,12 +260,17 @@ def workday_identity(url):
         parsed_destination = _workday_url(route)
         if not parsed_destination or parsed_destination[1][1:2] not in (['job'], ['details']):return None
         return workday_identity(route)
-    index = 3 if parts[1:2] == ['job'] else 2 if parts[1:2] == ['details'] else None
+    # A public posting can omit the location slug. Only intake identity opts
+    # into that exact, query-free spelling with an explicit requisition suffix.
+    locationless = (location_optional and len(parts) == 3 and parts[1] == 'job'
+                    and not p.query and '//' not in p.path)
+    index = 2 if locationless or parts[1:2] == ['details'] else 3 if parts[1:2] == ['job'] else None
     if index is None or len(parts) <= index or '_' not in parts[index]:return None
     slug = parts[index]
     # Preserve requisition suffixes such as R100_1; do not mistake its final 1
     # for the entire requisition. Other Workday IDs use the final slug separator.
     markers=list(re.finditer(r'_(?:jr|req|r)[-_]?\d',slug))
+    if locationless and not markers:return None
     requisition = slug[markers[-1].start()+1:] if markers else slug.rsplit('_', 1)[-1]
     if not re.fullmatch(r'[a-z0-9][a-z0-9_.-]*', requisition):return None
     for key, value in parse_qsl(p.query, keep_blank_values=True):
@@ -381,17 +386,38 @@ def _rippling_scope_url(url):
 
 
 def _dayforce_scope_url(url):
-    """Ignore a presentation locale only on Dayforce's tenant/posting route."""
+    """Normalize Dayforce locale and known manual application attribution."""
     try:
         p = urlsplit(canonical_url(url))
         if p.hostname != 'jobs.dayforcehcm.com':return url
         match = re.fullmatch(
-            r'/[A-Za-z]{2}-[A-Za-z]{2}(/[^/]+/CANDIDATEPORTAL/jobs/[0-9]+(?:/.*)?)', p.path)
+            r'(?:/[A-Za-z]{2}-[A-Za-z]{2})?(/[^/]+/(?i:CANDIDATEPORTAL)/jobs/[0-9]+)(/.*)?', p.path)
         if not match:return url
-        # The existing comparator still checks tenant, portal, posting, query,
-        # host and scheme. Intake keys and retained URLs are never rewritten.
-        return urlunsplit(p._replace(path=match[1]))
+        child = match[2] or ''
+        query = p.query
+        if p.scheme == 'https' and child == '/apply/manualApplication':
+            # canonical_url has already sorted the query and removed UTM tags.
+            # Match the complete observed bundle and retain any other query.
+            pairs = parse_qsl(query, keep_blank_values=True)
+            if pairs in (
+                [('applicationSource', 'Manual'), ('ref', 'Simplify'), ('source', 'Simplify')],
+                [('applicationSource', 'Manual'), ('ref', 'Simplify'), ('src', 'Simplify')],
+            ):
+                query = 'applicationSource=Manual'
+        return urlunsplit(p._replace(path=match[1] + child, query=query))
     except (ValueError, ProtocolError):return url
+
+
+def _workday_locationless_recovery(job_url, candidate_url):
+    """Recognize the canonical posting and manual form of a short Workday URL."""
+    expected = workday_identity(job_url, location_optional=True)
+    destination = _workday_url(candidate_url)
+    if not expected or not destination:return False
+    parsed, parts = destination
+    if (parsed.query or '//' in parsed.path or parts[1:2] != ['job'] or len(parts) < 4
+            or parts[4:] not in ([], ['apply'], ['apply', 'applymanually'])):
+        return False
+    return workday_identity(candidate_url) == expected
 
 
 def is_same_application_scope(job_url: str, candidate_url: str) -> bool:
@@ -403,8 +429,11 @@ def is_same_application_scope(job_url: str, candidate_url: str) -> bool:
         li_expected,li_actual=linkedin_identity(job_url),linkedin_identity(candidate_url)
         if li_expected or li_actual:return bool(li_expected and li_actual and li_expected==li_actual)
         workday_host=urlsplit(str(job_url).strip()).hostname or ''
-        if workday_host.casefold().endswith('.myworkdayjobs.com') and workday_identity(job_url):
-            return is_workday_application_scope(job_url, candidate_url)
+        if workday_host.casefold().endswith('.myworkdayjobs.com'):
+            if workday_identity(job_url):
+                return is_workday_application_scope(job_url, candidate_url)
+            if _workday_locationless_recovery(job_url, candidate_url):
+                return True
         icims_expected,icims_actual=icims_identity(job_url),icims_identity(candidate_url)
         if icims_expected and icims_actual and icims_expected==icims_actual:return True
         job_p = urlsplit(canonical_url(job_url))

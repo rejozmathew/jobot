@@ -63,6 +63,96 @@ write detailed logs locally and return aggregate results for primary inspection.
 
 ## Implementation and deployment
 
+Self-improvement #026 (November 10, 2026) restores owned Workday recovery
+from a location-free entry to its exact canonical posting or manual form.
+Intake identity from #025 already recognized the posting. The live scope
+check still rejected both canonical recovery routes. The existing Workday
+parser now supplies the same host, site and full requisition comparison for
+that specific transition. The observed posting had a separate account
+blocker, so the repair has zero supported additional submissions in this
+cohort. The paired Ubuntu replay preserved 183 baseline passes and recovered
+both failures. The four-slot replay preserved all four unaffected submissions
+and the next admission, then recovered a fifth submission with its original
+deadline. Another 75 matched confirmation, authentication and Simplify-order
+checks passed on both sources. The final managed suite passed 1,491 with 186
+skips. Private records retain the release evidence. Production effects remain
+under observation.
+
+Self-improvement #025 (November 9, 2026) recognizes a location-free
+Workday posting URL at intake when the hosted career site and explicit full
+requisition identify the same posting. This lets the existing duplicate
+policy find a prior confirmed submission before opening an application.
+The two observed redundant dispatches belonged to one already-submitted
+posting, so the additional unique-submission estimate is zero. Original
+records, browser ownership, accepted confirmation and retry behavior remain
+under the existing rules. The paired Ubuntu replay preserved all 181 baseline
+passes and recovered the three synthetic failures. Both one-slot queue variants
+kept the two confirmed controls and removed one redundant dispatch. Another 75
+confirmation, authentication and Simplify-order checks passed on both sources.
+The final managed suite passed 1,491 tests with 185 skips. Private notes retain
+the deployment evidence and production effects remain under observation.
+
+Self-improvement #024 (November 7, 2026) addresses a compound Dayforce
+transition observed after #023. Retained browser history showed the same
+posting lose its locale and gain Simplify attribution. The shared scope check
+now recognizes those exact attribution bundles on the hosted manual form.
+The existing tenant, posting, host, query and credential guards still apply.
+The two affected attempts represented one posting with untested later stages.
+The zero-gain scenario is zero additional submissions. The conditional scenario
+is one additional unique posting if all later controls and requirements are
+resolvable. The paired Ubuntu suite passed all 90 candidate checks, preserving
+all 86 baseline passes. The four-slot replay preserved the four control
+submissions and next admission, and recovered the affected fifth submission
+with its original deadline. The final managed suite passed 1,488 tests with
+185 platform or opt-in skips. Private notes keep replay, release and production
+evidence separate. Real submission and latency effects remain under observation.
+
+Self-improvement #023 (November 6, 2026) corrects the existing Dayforce
+locale comparison for lowercase and mixed-case candidate-portal routes.
+A locale-only transition previously invalidated the same posting when its
+portal segment was not uppercase. The shared matcher now recognizes that
+presentation casing while retaining its tenant/posting/query comparison.
+No company branch, helper, historical identity rewrite, deadline, retry limit,
+confirmation change or application-execution gate is introduced.
+
+Private numbered run notes retain the baseline/candidate browser and capacity
+replays, final managed-suite evidence, publication and idle-deployment status
+under `self-improvement-023-2026-11-06`. The paired Ubuntu candidate passed all
+86 checks, preserving all 65 baseline passes and correcting 21 failing cases.
+Both four-slot replays preserved four unaffected submissions and next admission;
+the candidate also submitted the recovered locale-transition case with its original
+60-minute deadline. The final managed suite passed 1,486 tests with 183 platform
+or opt-in skips. Production submission-rate and speed effects remain under
+observation; isolated submissions do not establish them.
+Four affected attempts represented one observed posting with unknown downstream
+form/account requirements: the guaranteed additional-submission estimate is zero,
+with at most one conditional additional unique-job candidate in that cohort.
+
+Self-improvement #022 (October 27, 2026) corrects explicit missing-email recovery
+on custom career pages containing an accepted Greenhouse frame. The existing
+helper already discovered those forms for ordinary advance, but its recovery
+branch rejected the unknown parent platform before using that capability. It now
+uses the same ownership-checked discovery, current verification evidence and
+shared reload, then resumes the normal Simplify/residual/submission path in the
+same session. An ordinary form is not reloaded because of a stale recovery flag;
+unresolved documents and other ATS retain their recovery handoffs. No helper,
+company branch, accepted confirmation source, deadline or retry policy is added.
+
+Private numbered run notes retain the paired synthetic replay, fixed-capacity
+queue, final managed suite, source manifest and actual publication/deployment
+status under `self-improvement-022-2026-10-27`. Ubuntu candidate validation passed 66 checks,
+preserving all 58 passing baseline checks across the corrected paired fixtures.
+Both four-slot queue replays submitted all five synthetic jobs with their original
+deadlines; manual recovery fallbacks decreased from one to zero. The final managed
+suite passed 1,468 tests with 180 opt-in/platform skips. These fixtures do not
+establish production submission-rate or latency non-regression. The observed posting already
+submitted through manual recovery, so this change has zero additional observed
+unique-job candidates. Avoiding that wrong helper handoff is a bounded workload
+opportunity; production latency and submission-rate effects remain unmeasured.
+The daily review also preserves a Simplify-only confirmation discrepancy and
+an unrelated early-form browser-write stall for further investigation. Neither
+justifies changing production records or shortening application recovery.
+
 Self-improvement #021 (October 24, 2026) corrects #020's Linux service entry
 point. The function-level tests passed, but the installed command imported an
 optional `filelock` package absent from the runtime. It now uses the existing

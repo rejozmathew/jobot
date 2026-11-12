@@ -149,6 +149,32 @@ Profile facts remain a separate source rather than being copied into permanent
 library entries. A missing library match returns control to ordinary interpretation,
 available facts and recovery; it does not define an application failure.
 
+Structured profile questions use the existing `candidates.profile_json` and hash;
+they do not require a new table or database migration. The shared catalogue lives
+in `profile_questions.py`. Optional `profile_answer_sources` metadata records the
+field path, source type, exact library-entry or human-response revision, scope,
+conditions, and save timestamp. Selecting a suggestion copies its explicit value
+into the profile while retaining the source record and all of its history. Only
+recognized general questions with applicable country conditions are offered;
+company/job responses remain in the scoped library. Conflicting candidates are
+shown for selection rather than silently resolved by frequency or recency.
+
+Profile saves compare the original profile hash inside the write transaction and
+recheck selected source revisions. Known fields preserve typed null/boolean/text/
+numeric values; unrelated factual JSON is retained. For recognized structured
+questions, answer order is explicit human application response, active job/company
+exception, current structured profile, then general learned knowledge. An explicitly
+cleared profile field no longer supplies its former general answer. Unrecognized
+wording and more specific definitions retain the ordinary interpretation path.
+
+`profile_export_path` is an optional projection of the configured candidate into
+a private JSON file, not another answer-history store or an automatic import
+source. `managed_profiles.py` replaces the export atomically using the existing
+password-file lock when paths are shared. It preserves credentials, private policy,
+and legacy resume text. The file records the exported candidate/hash and timestamp;
+export failures are visible and retryable without rolling back the database save.
+Previously recorded attempts and company/job library entries are unchanged.
+
 ## Evidence and private files
 
 Database projections contain sanitized timeline and outcome information. Private

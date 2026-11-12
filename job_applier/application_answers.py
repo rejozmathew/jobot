@@ -252,6 +252,9 @@ def match_answer_to_option(answer, options):
 
 def approved_answer(question, profile):
     """Use explicit Jobbot facts; the executor resolves unfamiliar/compound wording."""
+    from .profile_questions import structured_answer,field_for_question
+    answer=structured_answer(question,profile)
+    if answer is not None or field_for_question(question):return answer
     standard=profile.get('standard_answers') or {};identity=profile.get('identity') or {}
     auth=profile.get('work_authorization') or {}
     if not isinstance(auth,dict):auth={}
@@ -317,18 +320,22 @@ def saved_answer(question,package):
     exact=next((q for q in package.get('saved_questions',[]) if q.get('question_key')==key
                  and q.get('state')!='superseded' and q.get('answer') is not None),None)
     if exact and exact.get('answer_source') in ('user_dashboard','user_reply'):return exact['answer']
-    from .managed_answer_library import resolve_library
-    library=resolve_library(question,package.get('job',{}),package.get('answer_library',[]))
+    from .managed_answer_library import resolve_with_profile
+    profile=package.get('attempt',{}).get('profile_json') or {}
+    if isinstance(profile,str):profile=json.loads(profile)
+    library=resolve_with_profile(question,package.get('job',{}),package.get('answer_library',[]),profile)
     if library.get('matched'):return library['answer']
     return exact['answer'] if exact and not exact.get('library_entry_id') else None
 
 
 def saved_answer_basis(question,package):
-    from .managed_answer_library import resolve_library
+    from .managed_answer_library import resolve_with_profile
     from .managed_questions import question_key,question_data
     try:key=question_key(question_data(**{k:question[k] for k in ('field','question','kind','required','context')},
         options=[{k:o[k] for k in ('value','label')} for o in question.get('options',[])]))
     except (KeyError,ValueError):return None
     if any(q.get('question_key')==key and q.get('state')!='superseded' and q.get('answer') is not None
            and q.get('answer_source') in ('user_dashboard','user_reply') for q in package.get('saved_questions',[])):return None
-    return resolve_library(question,package.get('job',{}),package.get('answer_library',[])).get('basis')
+    profile=package.get('attempt',{}).get('profile_json') or {}
+    if isinstance(profile,str):profile=json.loads(profile)
+    return resolve_with_profile(question,package.get('job',{}),package.get('answer_library',[]),profile).get('basis')
