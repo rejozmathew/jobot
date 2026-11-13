@@ -1228,6 +1228,12 @@ leases. Local execution uses OS/database access, not an unauthenticated network 
 ## Helper map and canonical procedure
 
 LinkedIn is a recognized platform, with application type observed separately.
+The shared observed-navigation path supports LinkedIn's two public password-reset
+request forms at the exact HTTPS host, without query strings or fragments.
+The owned session must observe the transition. The request page carries no
+posting identity, and signed reset links and credential scopes retain their
+existing safeguards. Opening the request form does not establish that an email
+was sent or the account recovered.
 Confirmed Easy Apply routes through `linkedin_easy_apply` (native Hermes and
 portable session call), registered in `hermes_plugin` and `workspace_host`.
 Startup, writer observations and shared snapshots supply the LinkedIn reference

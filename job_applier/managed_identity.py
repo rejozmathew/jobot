@@ -16,7 +16,13 @@ def canonical_url(url):
     # connections), not a password-reset token. Additional path segments and
     # secret-bearing query parameters still use the existing sensitive checks.
     reset_request=bool(re.fullmatch(r'/u/reset-password/request(?:/[A-Za-z0-9_-]+)?/?',p.path))
-    if not reset_request and any(s in p.path.lower() for s in ('reset-password','password-reset','verify-email','oauth/','signin/callback')):
+    # LinkedIn serves two public request forms before issuing any recovery token.
+    # The observed-route proof still binds either form to the owned session.
+    linkedin_reset_request=(p.scheme=='https' and p.netloc.lower()=='www.linkedin.com' and
+        p.path in ('/checkpoint/rp/request-password-reset','/uas/request-password-reset') and
+        not p.query and not p.fragment)
+    if not (reset_request or linkedin_reset_request) and any(s in p.path.lower() for s in (
+            'reset-password','password-reset','verify-email','oauth/','signin/callback')):
         raise ProtocolError('sensitive_url')
     query = parse_qsl(p.query, keep_blank_values=True)
     if any(k.lower() in ('access_token','refresh_token','otp','password','reset_token','authorization_code') for k,v in query):

@@ -12,14 +12,20 @@ from test_owned_route_history import SOURCE, owned_page, gate
 RESET='https://login.example.test/u/reset-password/request/hs-123'
 LOGIN='https://login.example.test/u/login/password'
 RETURN=SOURCE.rsplit('/',1)[0]+'/application'
+LINKEDIN_RESETS=(
+    'https://www.linkedin.com/checkpoint/rp/request-password-reset',
+    'https://www.linkedin.com/uas/request-password-reset',
+)
 
 
-@pytest.mark.parametrize('reset', [RESET, 'https://login.example.test/u/reset-password/request/syntheticTenant-custom'])
+@pytest.mark.parametrize('reset', [RESET, 'https://login.example.test/u/reset-password/request/syntheticTenant-custom', *LINKEDIN_RESETS])
 def test_observed_reset_request_can_continue_and_return_to_application(tmp_path, reset):
+    login='https://www.linkedin.com/login' if reset in LINKEDIN_RESETS else LOGIN
+
     def html(url):
         if url==SOURCE:
-            return '<h1>Sign in</h1><input type="email"><button onclick='+json.dumps("location.href='"+LOGIN+"'")+'>Next</button>'
-        if url==LOGIN:
+            return '<h1>Sign in</h1><input type="email"><button onclick='+json.dumps("location.href='"+login+"'")+'>Next</button>'
+        if url==login:
             return '<h1>Sign in</h1><input type="password"><a href="'+reset+'">Reset your password</a>'
         if url==reset:
             return '<h1>Reset your password</h1><label>Email<input type="email" value="candidate@example.test"></label><button onclick='+json.dumps("location.href='"+RETURN+"'")+'>Continue</button>'
@@ -29,7 +35,7 @@ def test_observed_reset_request_can_continue_and_return_to_application(tmp_path,
             client=LocalClient({'instance_id':service.instance_id},service=service)
             config={'cdp_url':page.fixture_endpoint,'browser_mode':'headless','spool_dir':str(tmp_path/'spool')}
             namespace=service.application_context(owner['attempt_id'])['namespace']
-            for selector,url in [('button',LOGIN),('a',reset),('button',RETURN)]:
+            for selector,url in [('button',login),('a',reset),('button',RETURN)]:
                 package=service.application_context(owner['attempt_id'])
                 await asyncio.to_thread(browser_action,config,client,owner,package,page.target_id,{'method':'click','selector':selector})
                 assert await page.evaluate('location.href')==url
@@ -90,3 +96,18 @@ def test_custom_connection_reset_request_is_public_but_not_unobserved_job_scope(
     from job_applier.managed_shared import ProtocolError
     for suffix in ('?reset_token=synthetic-secret','/synthetic-secret','?password=secret'):
         with pytest.raises(ProtocolError,match='sensitive_url'):canonical_url(reset+suffix)
+
+
+@pytest.mark.parametrize('reset', LINKEDIN_RESETS)
+def test_linkedin_public_reset_request_does_not_authorize_other_urls(reset):
+    from job_applier.managed_identity import canonical_url, is_same_application_scope, observed_posting_key
+    from job_applier.managed_shared import ProtocolError
+
+    assert canonical_url(reset)==reset
+    assert observed_posting_key(reset) is None
+    assert not is_same_application_scope('https://www.linkedin.com/jobs/view/123',reset)
+    for url in (reset+'?reset_token=fixture',reset+'?token=fixture',reset+'#fixture',
+                reset+'/fixture',reset.replace('www.linkedin.com','linkedin.example.test'),
+                reset.replace('https:','http:')):
+        with pytest.raises(ProtocolError,match='sensitive_url'):
+            canonical_url(url)
