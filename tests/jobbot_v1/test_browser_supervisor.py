@@ -93,6 +93,38 @@ def test_existing_browser_lookup_ignores_orphan_chromium_children(tmp_path):
     assert linux_profile_in_use(workspace, tmp_path/'proc', browser_root_only=True) == 125
 
 
+@pytest.mark.skipif(os.name != 'posix', reason='Linux Chromium singleton timestamps')
+@pytest.mark.parametrize('lock_age, socket_exists, expected', [
+    (100, False, None),
+    (-100, False, 2884),
+    (100, True, 2884),
+])
+def test_singleton_lock_from_before_boot_cannot_claim_reused_pid(
+        tmp_path, monkeypatch, lock_age, socket_exists, expected):
+    import socket
+    from job_applier import workspace_process
+
+    boot = 1700000000
+    proc = tmp_path / 'proc'
+    proc.mkdir()
+    (proc / 'stat').write_text(f'btime {boot}\n')
+    profile = tmp_path / 'profile'
+    profile.mkdir()
+    lock = profile / 'SingletonLock'
+    lock.symlink_to(f'{socket.gethostname()}-2884')
+    os.utime(lock, (boot - lock_age, boot - lock_age), follow_symlinks=False)
+    endpoint = tmp_path / 'process-singleton'
+    if socket_exists:
+        endpoint.touch()
+    (profile / 'SingletonSocket').symlink_to(endpoint)
+    monkeypatch.setattr(workspace_process, 'process_identity',
+                        lambda pid: {'pid': pid, 'created': 1218})
+
+    from pathlib import Path
+    monkeypatch.setattr(attachment, 'Path', lambda path: proc / 'stat' if path == '/proc/stat' else Path(path))
+    assert attachment.singleton_process({'user_data_dir': str(profile)}) == expected
+
+
 @pytest.mark.skipif(os.name != 'posix' or not os.environ.get('JOBBOT_SUPERVISOR_TEST_BROWSER'),
                     reason='Opt-in isolated Linux browser fixture')
 def test_real_browser_recovers_without_dashboard(tmp_path):

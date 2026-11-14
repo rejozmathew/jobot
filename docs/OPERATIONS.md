@@ -47,6 +47,10 @@ the configured profile when its browser process disappears. It reuses a correctl
 configured running browser without duplicating its tabs. Transient launch or
 endpoint failures are retried and reported on state changes in the unit journal.
 An existing process with an unavailable endpoint is retained, not killed.
+On Linux, a local Chromium singleton lock from before the current boot with a
+missing singleton socket does not identify the current process at that PID.
+The supervisor falls back to its normal profile process checks and launch path.
+It does not delete the singleton files or close any existing browser tabs.
 The unit should show `active (running)`, not the old `active (exited)` state.
 Do not restart this browser unit while applications are active: it owns browsers
 it launches, whereas starting it against an already-open browser only adopts the

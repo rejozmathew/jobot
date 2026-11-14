@@ -54,9 +54,27 @@ def singleton_process(workspace):
     """Chromium's profile lock identifies its process even with a default profile."""
     from .workspace_process import process_identity
     try:
-        hostname,pid=os.readlink(Path(workspace['user_data_dir'])/'SingletonLock').rsplit('-',1)
-        if hostname==socket.gethostname() and process_identity(int(pid)):
-            return int(pid)
+        profile = Path(workspace['user_data_dir'])
+        lock = profile / 'SingletonLock'
+        hostname, pid_text = os.readlink(lock).rsplit('-', 1)
+        pid = int(pid_text)
+        if hostname != socket.gethostname() or not process_identity(pid):
+            return None
+
+        # Chromium stores only a PID. After a reboot that number can belong to
+        # a different process. Retain the lock if the singleton endpoint exists
+        # or the boot time cannot be established.
+        try:
+            boot = next((int(line.split()[1]) for line in Path('/proc/stat').read_text().splitlines()
+                         if line.startswith('btime ')), None)
+            if boot is not None and lock.lstat().st_mtime < boot:
+                try:
+                    (profile / 'SingletonSocket').stat()
+                except FileNotFoundError:
+                    return None
+        except (OSError, ValueError):
+            pass
+        return pid
     except (OSError,ValueError):pass
     return None
 

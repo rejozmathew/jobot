@@ -25,7 +25,7 @@ def fixture_host(tmp_path):
 def test_existing_browser_is_never_launched_or_owned(tmp_path, monkeypatch):
     host, service, session = fixture_host(tmp_path)
     monkeypatch.setattr(wh, 'endpoint_info', lambda _: {'webSocketDebuggerUrl':'ws://127.0.0.1:19600/devtools/browser/existing'})
-    monkeypatch.setattr(wh, 'profile_in_use', lambda _: os.getpid())
+    monkeypatch.setattr('job_applier.workspace_attachment.existing_profile_process', lambda _: os.getpid())
     monkeypatch.setattr('job_applier.workspace_attachment.verify_connection_process', lambda *args: 'headed')
     monkeypatch.setattr(wh.OwnedProcess, 'launch', lambda *a, **k: pytest.fail('Launched an owned browser'))
     # A supported existing-browser attachment must not reject an occupied endpoint.
